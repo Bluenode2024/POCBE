@@ -1,14 +1,12 @@
-import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { createSupabaseClient } from '../config/database.config';
+import { Injectable, Inject } from '@nestjs/common';
+import { SupabaseClient } from '@supabase/supabase-js';
 
 @Injectable()
 export class AdminService {
-  private supabase;
-
-  constructor(private configService: ConfigService) {
-    this.supabase = createSupabaseClient(configService);
-  }
+  constructor(
+    @Inject('SUPABASE_CLIENT')
+    private readonly supabase: SupabaseClient,
+  ) {}
 
   async grantAdminRole(
     granterId: string,

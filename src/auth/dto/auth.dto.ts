@@ -1,4 +1,4 @@
-import { IsString, IsEthereumAddress, IsOptional } from 'class-validator';
+import { IsString, IsEthereumAddress } from 'class-validator';
 
 export class SignInDto {
   @IsEthereumAddress()

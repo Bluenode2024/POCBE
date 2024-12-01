@@ -1,12 +1,18 @@
-import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
+import {
+  Injectable,
+  Inject,
+  CanActivate,
+  ExecutionContext,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { SupabaseService } from '../config/supabase.config';
+import { SupabaseClient } from '@supabase/supabase-js';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
   constructor(
+    @Inject('SUPABASE_CLIENT')
+    private readonly supabase: SupabaseClient,
     private reflector: Reflector,
-    private supabaseService: SupabaseService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -23,7 +29,7 @@ export class RolesGuard implements CanActivate {
       return false;
     }
 
-    const { data: adminRole } = await this.supabaseService.client
+    const { data: adminRole } = await this.supabase
       .from('admin_roles')
       .select('*')
       .eq('user_id', user.sub)

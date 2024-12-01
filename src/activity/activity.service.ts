@@ -1,12 +1,13 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { SupabaseService } from '../config/supabase.config';
+import { Injectable, Inject } from '@nestjs/common';
+import { SupabaseClient } from '@supabase/supabase-js';
 import { IPFSService } from '../ipfs/ipfs.service';
 import { WalletService } from '../wallet/wallet.service';
 
 @Injectable()
 export class ActivityService {
   constructor(
-    private supabaseService: SupabaseService,
+    @Inject('SUPABASE_CLIENT')
+    private readonly supabase: SupabaseClient,
     private ipfsService: IPFSService,
     private walletService: WalletService,
   ) {}
@@ -18,33 +19,50 @@ export class ActivityService {
     signature: string,
     walletAddress: string,
   ) {
-    // IPFS에 증명 데이터 업로드
-    const ipfsHash = await this.ipfsService.uploadJSON(proofData);
+    // IPFS에 증거 업로드
+    const ipfsHash = await this.ipfsService.uploadJson(proofData);
 
     // 서명 검증
-    const message = `Submitting activity proof: ${ipfsHash}`;
-    const isValidSignature = await this.walletService.verifySignature(
-      message,
+    const isValid = await this.walletService.verifySignature(
+      `Submit proof: ${ipfsHash}`,
       signature,
       walletAddress,
     );
 
-    if (!isValidSignature) {
+    if (!isValid) {
       throw new Error('Invalid signature');
     }
 
-    // Supabase에 증명 제출
-    const { data, error } = await this.supabaseService.client.rpc(
-      'submit_activity_proof',
-      {
-        p_user_id: userId,
-        p_activity_type_id: activityTypeId,
-        p_ipfs_hash: ipfsHash,
-        p_proof_message: message,
-      },
+    // 증명 제출
+    return this.supabase.rpc('submit_activity_proof', {
+      p_user_id: userId,
+      p_activity_type_id: activityTypeId,
+      p_ipfs_hash: ipfsHash,
+      p_proof_message: proofData.message,
+    });
+  }
+
+  async approveActivityProof(
+    proofId: string,
+    adminId: string,
+    adminWalletAddress: string,
+    adminSignature: string,
+  ) {
+    // 서명 검증
+    const isValid = await this.walletService.verifySignature(
+      `Approve proof: ${proofId}`,
+      adminSignature,
+      adminWalletAddress,
     );
 
-    if (error) throw error;
-    return data;
+    if (!isValid) {
+      throw new Error('Invalid signature');
+    }
+
+    // 증명 승인
+    return this.supabase.rpc('approve_activity_proof', {
+      p_proof_id: proofId,
+      p_admin_id: adminId,
+    });
   }
 }

@@ -3,9 +3,10 @@ import { ActivityController } from './activity.controller';
 import { ActivityService } from './activity.service';
 import { IPFSModule } from '../ipfs/ipfs.module';
 import { WalletModule } from '../wallet/wallet.module';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
-  imports: [IPFSModule, WalletModule],
+  imports: [IPFSModule, WalletModule, JwtModule],
   controllers: [ActivityController],
   providers: [ActivityService],
   exports: [ActivityService],

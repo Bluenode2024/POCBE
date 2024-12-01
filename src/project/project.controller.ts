@@ -1,6 +1,6 @@
 import { Controller, Post, Body, Put, Param, UseGuards } from '@nestjs/common';
 import { ProjectService } from './project.service';
-import { AuthGuard } from '../auth/auth.guard';
+import { AuthGuard } from '../auth/guards/auth.guard';
 
 @Controller('project')
 @UseGuards(AuthGuard)

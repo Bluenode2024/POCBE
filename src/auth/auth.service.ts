@@ -1,27 +1,28 @@
 // src/auth/auth.service.ts
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Inject, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ethers } from 'ethers';
-import { SupabaseService } from '../config/supabase.config';
 import { SignInDto, RegisterDto } from './dto/auth.dto';
+import { SupabaseClient } from '@supabase/supabase-js';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private supabaseService: SupabaseService,
+    @Inject('SUPABASE_CLIENT')
+    private readonly supabase: SupabaseClient,
     private jwtService: JwtService,
   ) {}
 
   async validateSignature(signInDto: SignInDto): Promise<boolean> {
     try {
-      const recoveredAddress = ethers.utils.verifyMessage(
+      const recoveredAddress = ethers.verifyMessage(
         signInDto.message,
         signInDto.signature,
       );
       return (
         recoveredAddress.toLowerCase() === signInDto.walletAddress.toLowerCase()
       );
-    } catch (error) {
+    } catch {
       return false;
     }
   }
@@ -32,7 +33,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid signature');
     }
 
-    const { data: user, error } = await this.supabaseService.client
+    const { data: user, error } = await this.supabase
       .from('users')
       .select('*')
       .eq('wallet_address', signInDto.walletAddress)
@@ -55,7 +56,7 @@ export class AuthService {
   }
 
   async register(registerDto: RegisterDto) {
-    const { data: existingUser } = await this.supabaseService.client
+    const { data: existingUser } = await this.supabase
       .from('users')
       .select('*')
       .eq('wallet_address', registerDto.walletAddress)
@@ -65,7 +66,7 @@ export class AuthService {
       throw new UnauthorizedException('Wallet address already registered');
     }
 
-    const { data, error } = await this.supabaseService.client
+    const { data, error } = await this.supabase
       .from('users')
       .insert([
         {
