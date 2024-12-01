@@ -4,6 +4,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ethers } from 'ethers';
 import { SignInDto, RegisterDto } from './dto/auth.dto';
 import { SupabaseClient } from '@supabase/supabase-js';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
@@ -11,10 +12,14 @@ export class AuthService {
     @Inject('SUPABASE_CLIENT')
     private readonly supabase: SupabaseClient,
     private jwtService: JwtService,
+    private readonly configService: ConfigService,
   ) {}
 
   async validateSignature(signInDto: SignInDto): Promise<boolean> {
     try {
+      if (this.configService.get('NODE_ENV') === 'development') {
+        return true;
+      }
       const recoveredAddress = ethers.verifyMessage(
         signInDto.message,
         signInDto.signature,
@@ -43,16 +48,21 @@ export class AuthService {
       throw new UnauthorizedException('User not found');
     }
 
-    const payload = {
-      sub: user.id,
-      walletAddress: user.wallet_address,
-      role: user.registration_status,
-    };
+    try {
+      const payload = {
+        sub: signInDto.walletAddress,
+        message: signInDto.message,
+      };
 
-    return {
-      access_token: await this.jwtService.signAsync(payload),
-      user,
-    };
+      const secret = this.configService.get('JWT_SECRET_KEY');
+      const token = await this.jwtService.signAsync(payload, {
+        secret: secret, // Pass the secret to the signAsync method
+      });
+      return { access_token: token, user };
+    } catch (error) {
+      console.error('Token generation error:', error);
+      throw new Error('Token generation failed');
+    }
   }
 
   async register(registerDto: RegisterDto) {
