@@ -1,6 +1,7 @@
 import { Controller, Post, Body, Put, Param, UseGuards } from '@nestjs/common';
 import { ProjectService } from './project.service';
 import { AuthGuard } from '../auth/guards/auth.guard';
+import { CreateProjectTaskDto } from './dto/create-project-task.dto';
 
 @Controller('project')
 @UseGuards(AuthGuard)
@@ -75,5 +76,13 @@ export class ProjectController {
       data.verificationTxHash,
       data.ipfsHash,
     );
+  }
+
+  @Post(':projectId/task')
+  async createProjectTask(
+    @Param('projectId') projectId: string,
+    @Body() createProjectTaskDto: CreateProjectTaskDto,
+  ) {
+    return this.projectService.createProjectTask(createProjectTaskDto);
   }
 }

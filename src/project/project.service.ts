@@ -1,5 +1,6 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { SupabaseClient } from '@supabase/supabase-js';
+import { CreateProjectTaskDto } from './dto/create-project-task.dto';
 
 @Injectable()
 export class ProjectService {
@@ -73,6 +74,22 @@ export class ProjectService {
       p_ipfs_hash: ipfsHash,
     });
 
+    if (error) throw error;
+    return data;
+  }
+
+  async createProjectTask(createProjectTaskDto: CreateProjectTaskDto) {
+    const { title, description, contribute_score, task_url, deadline } =
+      createProjectTaskDto;
+    const { data, error } = await this.supabase.from('project_tasks').insert([
+      {
+        title,
+        description,
+        contribute_score,
+        task_url,
+        deadline,
+      },
+    ]);
     if (error) throw error;
     return data;
   }

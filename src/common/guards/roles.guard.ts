@@ -7,6 +7,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import { ROLES_KEY, UserRole } from '../decorators/roles.decorator';
 import { SupabaseClient } from '@supabase/supabase-js';
+import * as jwt from 'jsonwebtoken';
 //import { Observable } from 'rxjs';
 
 @Injectable()
@@ -19,23 +20,53 @@ export class RolesGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     // 핸들러에 설정된 필요한 역할들을 가져옵니다
+    console.log('canActivate 시작');
     const requiredRoles = this.reflector.getAllAndOverride<UserRole[]>(
       ROLES_KEY,
       [context.getHandler(), context.getClass()],
     );
-
+    console.log('requiredRoles 통과');
     // 역할이 지정되지 않았다면 접근을 허용합니다
     if (!requiredRoles) {
       return true;
     }
-
+    console.log('requiredRoles 통과');
     const request = context.switchToHttp().getRequest();
-    const userId = request.user?.id; // JWT로부터 추출된 사용자 ID
 
-    if (!userId) {
+    // 1. Authorization 헤더에서 JWT 토큰 추출
+    const authHeader = request.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.error('Authorization 헤더가 없거나 형식이 잘못되었습니다.');
+      return false;
+    }
+    const token = authHeader.split(' ')[1];
+
+    // 2. JWT 토큰 디코딩 및 request.user 설정
+    try {
+      const secretKey = 'your-secret-key'; // 환경 변수로 대체 권장
+      const decoded = jwt.verify(token, secretKey); // jwt 패키지로 토큰 검증
+      request.user = decoded; // 디코딩된 사용자 정보를 요청 객체에 추가
+    } catch (err) {
+      console.error('Invalid Token:', err);
       return false;
     }
 
+    // 3. 사용자 ID 확인
+    const userId = request.user?.userId || request.user?.id; // JWT의 "sub" 또는 "id" 필드에서 사용자 ID 가져오기
+    if (!userId) {
+      console.error('사용자 ID를 찾을 수 없습니다.');
+      return false;
+    }
+
+    // console.log(request);
+    // const userId = request.user?.id; // JWT로부터 추출된 사용자 ID
+
+    // if (!userId) {
+    //   return false;
+    // }
+    console.log(request.user);
+    console.log(userId);
+    console.log('userId 통과');
     // 사용자의 역할들을 확인합니다
     const userRoles = await this.getUserRoles(userId);
 

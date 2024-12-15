@@ -38,6 +38,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid signature');
     }
 
+    // 사용자 조회
     const { data: user, error } = await this.supabase
       .from('users')
       .select('*')
@@ -48,17 +49,43 @@ export class AuthService {
       throw new UnauthorizedException('User not found');
     }
 
+    // admin_roles 테이블에서 가장 최근의 active한 관리자 권한 확인
+    const { data: adminRole, error: adminError } = await this.supabase
+      .from('admin_roles')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('is_active', true)
+      .order('granted_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (adminError && adminError.code !== 'PGRST116') {
+      console.error('Admin role check error:', adminError);
+    }
+
+    console.log('adminRole:', adminRole);
+
     try {
       const payload = {
         sub: signInDto.walletAddress,
         message: signInDto.message,
+        userId: user.id,
+        isAdmin: !!adminRole, // admin_roles 테이블에 레코드가 있으면 true
+        roles: adminRole ? ['admin'] : ['user'],
       };
 
       const secret = this.configService.get('JWT_SECRET_KEY');
       const token = await this.jwtService.signAsync(payload, {
-        secret: secret, // Pass the secret to the signAsync method
+        secret: secret,
       });
-      return { access_token: token, user };
+      return {
+        access_token: token,
+        user: {
+          ...user,
+          isAdmin: !!adminRole,
+          roles: adminRole ? ['admin'] : ['user'],
+        },
+      };
     } catch (error) {
       console.error('Token generation error:', error);
       throw new Error('Token generation failed');

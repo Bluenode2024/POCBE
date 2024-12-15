@@ -30,7 +30,7 @@ export class EpochService {
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) throw new Error('에포크 생성 에러');
     return data;
   }
 
