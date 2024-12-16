@@ -49,6 +49,3 @@ export class CreateProjectDto {
   @Type(() => ProjectMemberDto)
   memberData: ProjectMemberDto[];
 }
-
-// export class RequestProjectDto {
-//}

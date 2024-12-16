@@ -1,5 +1,6 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { SupabaseClient } from '@supabase/supabase-js';
+import { CreateProjectRequestDto } from './dto/create-project-request';
 
 @Injectable()
 export class ProjectService {
@@ -73,6 +74,26 @@ export class ProjectService {
       p_ipfs_hash: ipfsHash,
     });
 
+    if (error) throw error;
+    return data;
+  }
+
+  async projectRequestRegistration(
+    createProjectRequestDto: CreateProjectRequestDto,
+  ) {
+    const { data, error } = await this.supabase
+      .from('project_requests')
+      .insert([
+        {
+          epoch_id: createProjectRequestDto.epochId,
+          requested_by: createProjectRequestDto.requestedBy,
+          title: createProjectRequestDto.title,
+          description: createProjectRequestDto.description,
+          proposed_members: createProjectRequestDto.proposedMembers,
+        },
+      ])
+      .select()
+      .single();
     if (error) throw error;
     return data;
   }

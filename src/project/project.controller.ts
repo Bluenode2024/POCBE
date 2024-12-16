@@ -1,6 +1,7 @@
 import { Controller, Post, Body, Put, Param, UseGuards } from '@nestjs/common';
 import { ProjectService } from './project.service';
 import { AuthGuard } from '../auth/guards/auth.guard';
+import { CreateProjectRequestDto } from './dto/create-project-request';
 
 @Controller('project')
 @UseGuards(AuthGuard)
@@ -74,6 +75,15 @@ export class ProjectController {
       data.completionStatus,
       data.verificationTxHash,
       data.ipfsHash,
+    );
+  }
+
+  @Post('request')
+  async createProjectRequest(
+    @Body() createProjectRequestDto: CreateProjectRequestDto,
+  ) {
+    return this.projectService.projectRequestRegistration(
+      createProjectRequestDto,
     );
   }
 }
