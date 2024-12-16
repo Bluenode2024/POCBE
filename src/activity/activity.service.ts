@@ -2,6 +2,7 @@ import { Injectable, Inject } from '@nestjs/common';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { IPFSService } from '../ipfs/ipfs.service';
 import { WalletService } from '../wallet/wallet.service';
+import { CreatePocActivityDto } from './dto/create-poc-activity.dto';
 
 @Injectable()
 export class ActivityService {
@@ -64,5 +65,25 @@ export class ActivityService {
       p_proof_id: proofId,
       p_admin_id: adminId,
     });
+  }
+  async pocActivityRegistration(createPocActivityDto: CreatePocActivityDto) {
+    const { data, error } = await this.supabase
+      .from('poc_activities')
+      .insert([
+        {
+          epoch_id: createPocActivityDto.epochId,
+          title: createPocActivityDto.title,
+          activity_type: createPocActivityDto.activityType,
+          max_count_per_epoch: createPocActivityDto.maxCountPerEpoch,
+          required_proof_type: createPocActivityDto.requiredProofType,
+          created_by: createPocActivityDto.createdBy,
+          is_active: true,
+        },
+      ])
+      .select()
+      .single();
+    if (error) throw error;
+    console.log(data);
+    return data;
   }
 }

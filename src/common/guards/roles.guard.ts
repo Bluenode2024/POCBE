@@ -35,6 +35,7 @@ export class RolesGuard implements CanActivate {
 
     // 1. Authorization 헤더에서 JWT 토큰 추출
     const authHeader = request.headers.authorization;
+    console.log(authHeader);
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       console.error('Authorization 헤더가 없거나 형식이 잘못되었습니다.');
       return false;
@@ -43,7 +44,7 @@ export class RolesGuard implements CanActivate {
 
     // 2. JWT 토큰 디코딩 및 request.user 설정
     try {
-      const secretKey = 'your-secret-key'; // 환경 변수로 대체 권장
+      const secretKey = process.env.JWT_SECRET_KEY; // 환경 변수로 대체 권장
       const decoded = jwt.verify(token, secretKey); // jwt 패키지로 토큰 검증
       request.user = decoded; // 디코딩된 사용자 정보를 요청 객체에 추가
     } catch (err) {
@@ -51,22 +52,15 @@ export class RolesGuard implements CanActivate {
       return false;
     }
 
+    console.log(request.user);
+
     // 3. 사용자 ID 확인
-    const userId = request.user?.userId || request.user?.id; // JWT의 "sub" 또는 "id" 필드에서 사용자 ID 가져오기
+    const userId = request.user?.userId; // JWT의 "id" 필드에서 사용자 ID 가져오기
     if (!userId) {
       console.error('사용자 ID를 찾을 수 없습니다.');
       return false;
     }
 
-    // console.log(request);
-    // const userId = request.user?.id; // JWT로부터 추출된 사용자 ID
-
-    // if (!userId) {
-    //   return false;
-    // }
-    console.log(request.user);
-    console.log(userId);
-    console.log('userId 통과');
     // 사용자의 역할들을 확인합니다
     const userRoles = await this.getUserRoles(userId);
 

@@ -1,6 +1,7 @@
 import { Controller, Post, Body, UseGuards } from '@nestjs/common';
 import { ActivityService } from './activity.service';
 import { AuthGuard } from '../auth/guards/auth.guard';
+import { CreatePocActivityDto } from './dto/create-poc-activity.dto';
 
 @Controller('activity')
 @UseGuards(AuthGuard)
@@ -43,5 +44,10 @@ export class ActivityController {
       data.adminWalletAddress,
       data.adminSignature,
     );
+  }
+
+  @Post('create')
+  async createPocActivity(@Body() createPocActivityDto: CreatePocActivityDto) {
+    return this.activityService.pocActivityRegistration(createPocActivityDto);
   }
 }
