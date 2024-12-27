@@ -1,7 +1,7 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios, { AxiosInstance } from 'axios';
-import FormData from 'form-data';
+import * as FormData from 'form-data';
 
 @Injectable()
 export class IPFSService implements OnModuleInit {
@@ -66,23 +66,47 @@ export class IPFSService implements OnModuleInit {
   async uploadFile(file: Buffer, filename: string): Promise<string> {
     try {
       const formData = new FormData();
-      formData.append('file', file, filename);
+      
+      // Buffer를 직접 추가
+      formData.append('file', file, {
+        filename,
+        contentType: 'application/octet-stream',
+      });
+
+      console.log('Starting file upload to Pinata...'); // 디버깅용 로그
+      console.log('File size:', file.length); // 파일 크기 확인
 
       const response = await this.pinataApi.post(
         '/pinning/pinFileToIPFS',
         formData,
         {
+          timeout: 30000, // 30초 타임아웃 설정
+          maxBodyLength: Infinity,
           headers: {
             ...formData.getHeaders(),
+            'Authorization': `Bearer ${this.jwt}`,
+          },
+          onUploadProgress: (progressEvent) => {
+            console.log('Upload progress:', progressEvent.loaded, '/', progressEvent.total);
           },
         },
       );
 
+      console.log('Pinata response received'); // 디버깅용 로그
       return response.data.IpfsHash;
     } catch (error) {
+      if (error.code === 'ECONNABORTED') {
+        console.error('Request timed out');
+      }
+      console.error('Upload error details:', {
+        code: error.code,
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+      });
       throw new Error(`Pinata 파일 업로드 실패: ${error.message}`);
     }
-  }
+}
 
   async unpinFile(hash: string): Promise<void> {
     try {
