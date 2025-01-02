@@ -104,6 +104,15 @@ export class AdminService {
     return users;
   }
 
+  async closeProject(projectId: string, adminId: string) {
+    const { data, error } = await this.supabase
+      .from('projects')
+      .update({ status: 'Closed', closed_by: adminId, closed_at: new Date() })
+      .eq('id', projectId);
+    if (error) throw error;
+    return data;
+  }
+
   // async approveRevokeList() {
   //   const { data: users, error: userError } = await this.supabase
   //     .from('users')
