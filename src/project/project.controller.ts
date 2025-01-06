@@ -27,6 +27,22 @@ export class ProjectController {
   }
 
   @Put('contribution/:projectId')
+  async updateMemberContribution(
+    @Param('projectId') projectId: string,
+    @Body()
+    data: {
+      userId: string;
+      contributionScore: number;
+    },
+  ) {
+    return this.projectService.updateMemberProjectContribution(
+      projectId,
+      data.userId,
+      data.contributionScore,
+    );
+  }
+
+  @Put('contribution/:projectId')
   async updateContribution(
     @Param('projectId') projectId: string,
     @Body()

@@ -32,7 +32,25 @@ export class ProjectService {
     contributionScore: number,
   ) {
     const { data, error } = await this.supabase.rpc(
-      'update_project_contribution',
+      'update_member_project_contribution',
+      {
+        p_project_id: projectId,
+        p_user_id: userId,
+        p_contribution_score: contributionScore,
+      },
+    );
+
+    if (error) throw error;
+    return data;
+  }
+
+  async updateMemberProjectContribution(
+    projectId: string,
+    userId: string,
+    contributionScore: number,
+  ) {
+    const { data, error } = await this.supabase.rpc(
+      'update_member_project_contribution',
       {
         p_project_id: projectId,
         p_user_id: userId,
