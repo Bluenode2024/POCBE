@@ -20,7 +20,7 @@ async function bootstrap() {
 
   // CORS 설정
   app.enableCors({
-    origin: 'http://localhost:3000', // 허용할 클라이언트 도메인
+    origin: 'http://localhost:3001', // 허용할 클라이언트 도메인
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // 허용할 메서드
     allowedHeaders: ['Content-Type', 'Authorization'], // 허용할 헤더
     credentials: true, // 쿠키 허용 여부
@@ -53,6 +53,6 @@ async function bootstrap() {
     }),
   );
 
-  await app.listen(3000);
+  await app.listen(3001);
 }
 bootstrap();
