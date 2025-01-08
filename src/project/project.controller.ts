@@ -42,24 +42,6 @@ export class ProjectController {
     );
   }
 
-  @Post('freerider-vote')
-  async submitFreeriderVote(
-    @Body()
-    data: {
-      projectId: string;
-      voterId: string;
-      targetUserId: string;
-      voteTxHash: string;
-    },
-  ) {
-    return this.projectService.submitFreeriderVote(
-      data.projectId,
-      data.voterId,
-      data.targetUserId,
-      data.voteTxHash,
-    );
-  }
-
   @Post('complete/:projectId')
   async completeProject(
     @Param('projectId') projectId: string,
