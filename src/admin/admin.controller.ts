@@ -39,13 +39,13 @@ export class AdminController {
     return this.adminService.closeProject(projectId, data.adminId);
   }
 
-  @Get('monitor-task-progress')
-  async monitorTask() {
-    return this.adminService.moniterUserTasks();
-  }
-
   @Get('approve-user-request')
   async approveUserRequest() {
     return this.adminService.approveUserList();
+  }
+
+  @Get('approve-revoke-list')
+  async approveRevokeList() {
+    return this.adminService.approveRevokeList();
   }
 }
