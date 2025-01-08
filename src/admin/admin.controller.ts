@@ -43,9 +43,4 @@ export class AdminController {
   async approveUserRequest() {
     return this.adminService.approveUserList();
   }
-
-  @Get('approve-revoke-list')
-  async approveRevokeList() {
-    return this.adminService.approveRevokeList();
-  }
 }
