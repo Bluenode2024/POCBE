@@ -1,32 +1,42 @@
-import { Controller, Post, Body, Put, Param, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Put,
+  Param,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { ProjectService } from './project.service';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { CreateProjectRequestDto } from './dto/create-project-request';
+import { CreateProjectDto } from './dto/create-project.dto';
 
 @Controller('project')
 @UseGuards(AuthGuard)
 export class ProjectController {
   constructor(private readonly projectService: ProjectService) {}
 
-  @Post()
+  @Post(':epochId')
   async createProject(
-    @Body()
-    data: {
-      title: string;
-      description: string;
-      leaderId: string;
-      memberData: any;
-    },
+    @Param('epochId') epochId: string,
+    @Body() newProject: CreateProjectDto,
+    @Request() req,
   ) {
+    const leaderId = req.user.userId;
+    console.log('req.user', req.user);
     return this.projectService.createProject(
-      data.title,
-      data.description,
-      data.leaderId,
-      data.memberData,
+      epochId,
+      newProject.title,
+      newProject.description,
+      newProject.memberData,
+      newProject.startDate,
+      newProject.endDate,
+      leaderId,
     );
   }
 
-  @Put('contribution/:projectId')
+  @Put('contribution/:projectId/members')
   async updateMemberContribution(
     @Param('projectId') projectId: string,
     @Body()

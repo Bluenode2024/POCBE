@@ -33,12 +33,12 @@ export class CreateProjectDto {
   @IsString()
   description: string;
 
-  @ApiProperty({
-    description: '프로젝트 리더 ID',
-    example: '123e4567-e89b-12d3-a456-426614174000',
-  })
-  @IsUUID()
-  leaderId: string;
+  // @ApiProperty({
+  //   description: '프로젝트 리더 ID',
+  //   example: '123e4567-e89b-12d3-a456-426614174000',
+  // })
+  // @IsUUID()
+  // leaderId: string;
 
   @ApiProperty({
     description: '프로젝트 멤버 정보',
@@ -48,4 +48,18 @@ export class CreateProjectDto {
   @ValidateNested({ each: true })
   @Type(() => ProjectMemberDto)
   memberData: ProjectMemberDto[];
+
+  @ApiProperty({
+    description: '시작일',
+    example: '2025-02-01 00:00:00',
+  })
+  @IsString()
+  startDate: Date;
+
+  @ApiProperty({
+    description: '종료일',
+    example: '2025-02-28 00:00:00',
+  })
+  @IsString()
+  endDate: Date;
 }
