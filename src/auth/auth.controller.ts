@@ -21,6 +21,7 @@ export class AuthController {
     },
   })
   async signIn(@Body() signInDto: SignInDto) {
+    console.log('SignIn Request Body:', signInDto); // 요청 데이터 출력
     return this.authService.signIn(signInDto);
   }
 
@@ -31,6 +32,7 @@ export class AuthController {
     description: '사용자 등록 성공',
   })
   async register(@Body() registerDto: RegisterDto) {
+    console.log('Register Request Body:', registerDto); // 요청 데이터 출력
     return this.authService.register(registerDto);
   }
 }

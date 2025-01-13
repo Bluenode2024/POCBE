@@ -10,19 +10,37 @@ export class ProjectService {
   ) {}
 
   async createProject(
+    epochId: string,
     title: string,
     description: string,
-    leaderId: string,
     memberData: any,
+    startDate: Date,
+    endDate: Date,
+    leaderId: string,
   ) {
-    const { data, error } = await this.supabase.rpc('create_project', {
-      p_title: title,
-      p_description: description,
-      p_leader_id: leaderId,
-      p_member_data: memberData,
-    });
+    // const { data, error } = await this.supabase.rpc('create_project', {
+    //   p_title: title,
+    //   p_description: description,
+    //   p_leader_id: leaderId,
+    //   p_member_data: memberData,
+    // });
+    const { data, error } = await this.supabase
+      .from('projects')
+      .insert([
+        {
+          epoch_id: epochId,
+          title: title,
+          description: description,
+          members: memberData,
+          start_date: startDate,
+          end_date: endDate,
+          leader_id: leaderId,
+        },
+      ])
+      .select()
+      .single();
 
-    if (error) throw error;
+    if (error) throw new Error('프로젝트 생성 에러');
     return data;
   }
 
@@ -32,7 +50,25 @@ export class ProjectService {
     contributionScore: number,
   ) {
     const { data, error } = await this.supabase.rpc(
-      'update_project_contribution',
+      'update_member_project_contribution',
+      {
+        p_project_id: projectId,
+        p_user_id: userId,
+        p_contribution_score: contributionScore,
+      },
+    );
+
+    if (error) throw error;
+    return data;
+  }
+
+  async updateMemberProjectContribution(
+    projectId: string,
+    userId: string,
+    contributionScore: number,
+  ) {
+    const { data, error } = await this.supabase.rpc(
+      'update_member_project_contribution',
       {
         p_project_id: projectId,
         p_user_id: userId,
