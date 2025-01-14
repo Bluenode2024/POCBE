@@ -1,10 +1,27 @@
-// src/auth/auth.service.ts
-import { Injectable, Inject, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  Inject,
+  UnauthorizedException,
+  ConflictException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ethers } from 'ethers';
 import { SignInDto, RegisterDto } from './dto/auth.dto';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { ConfigService } from '@nestjs/config';
+
+export enum UserStatus {
+  DORMANT = 'dormant',
+  ACTIVE = 'active',
+  WITHDRAWN = 'withdrawn',
+  INACTIVE = 'inactive',
+}
+
+export enum RequestStatus {
+  PENDING = 'pending',
+  APPROVED = 'approved',
+  REJECTED = 'rejected',
+}
 
 @Injectable()
 export class AuthService {
@@ -32,13 +49,63 @@ export class AuthService {
     }
   }
 
+  async register(registerDto: RegisterDto) {
+    // 지갑 주소 중복 확인
+    const { data: existingWallet } = await this.supabase
+      .from('users')
+      .select('wallet_address')
+      .eq('wallet_address', registerDto.walletAddress)
+      .single();
+
+    if (existingWallet) {
+      throw new ConflictException('Wallet address already registered');
+    }
+
+    // 학번 중복 확인
+    const { data: existingStudentId } = await this.supabase
+      .from('users')
+      .select('student_id')
+      .eq('student_id', registerDto.studentId)
+      .single();
+
+    if (existingStudentId) {
+      throw new ConflictException('Student ID already registered');
+    }
+
+    // 새 사용자 등록
+    const { data, error } = await this.supabase
+      .from('users')
+      .insert([
+        {
+          username: registerDto.username,
+          department: registerDto.department,
+          student_id: registerDto.studentId,
+          wallet_address: registerDto.walletAddress,
+          status: UserStatus.DORMANT,
+          request_status: RequestStatus.PENDING,
+          created_at: new Date().toISOString(),
+        },
+      ])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Registration error:', error);
+      throw new Error('Registration failed');
+    }
+
+    return {
+      message: 'Registration successful. Awaiting admin approval.',
+      user: data,
+    };
+  }
+
   async signIn(signInDto: SignInDto) {
     const isValid = await this.validateSignature(signInDto);
     if (!isValid) {
       throw new UnauthorizedException('Invalid signature');
     }
 
-    // 사용자 조회
     const { data: user, error } = await this.supabase
       .from('users')
       .select('*')
@@ -49,7 +116,14 @@ export class AuthService {
       throw new UnauthorizedException('User not found');
     }
 
-    // admin_roles 테이블에서 가장 최근의 active한 관리자 권한 확인
+    // 계정 상태 확인
+    if (user.status !== UserStatus.ACTIVE) {
+      throw new UnauthorizedException(
+        'Account is not active. Please contact admin.',
+      );
+    }
+
+    // admin_roles 확인
     const { data: adminRole, error: adminError } = await this.supabase
       .from('admin_roles')
       .select('*')
@@ -63,21 +137,21 @@ export class AuthService {
       console.error('Admin role check error:', adminError);
     }
 
-    console.log('adminRole:', adminRole);
-
     try {
       const payload = {
         sub: signInDto.walletAddress,
         message: signInDto.message,
         userId: user.id,
-        isAdmin: !!adminRole, // admin_roles 테이블에 레코드가 있으면 true
+        isAdmin: !!adminRole,
         roles: adminRole ? ['admin'] : ['user'],
+        status: user.status,
       };
 
       const secret = this.configService.get('JWT_SECRET_KEY');
       const token = await this.jwtService.signAsync(payload, {
         secret: secret,
       });
+
       return {
         access_token: token,
         user: {
@@ -90,35 +164,5 @@ export class AuthService {
       console.error('Token generation error:', error);
       throw new Error('Token generation failed');
     }
-  }
-
-  async register(registerDto: RegisterDto) {
-    const { data: existingUser } = await this.supabase
-      .from('users')
-      .select('*')
-      .eq('wallet_address', registerDto.walletAddress)
-      .single();
-
-    if (existingUser) {
-      throw new UnauthorizedException('Wallet address already registered');
-    }
-
-    const { data, error } = await this.supabase
-      .from('users')
-      .insert([
-        {
-          username: registerDto.username,
-          full_name: registerDto.fullName,
-          department: registerDto.department,
-          wallet_address: registerDto.walletAddress,
-          student_id: registerDto.studentId,
-          registration_status: 'pending',
-        },
-      ])
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
   }
 }
