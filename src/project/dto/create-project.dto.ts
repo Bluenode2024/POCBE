@@ -41,6 +41,13 @@ export class CreateProjectDto {
   // leaderId: string;
 
   @ApiProperty({
+    description: '프로젝트 기여도',
+    example: 15,
+  })
+  @IsString()
+  contribution: number;
+
+  @ApiProperty({
     description: '프로젝트 멤버 정보',
     type: [ProjectMemberDto],
   })

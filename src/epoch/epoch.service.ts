@@ -13,24 +13,24 @@ export class EpochService {
   ) {}
 
   async createEpoch(createEpochDto: CreateEpochDto) {
+    console.log(createEpochDto);
     const { data, error } = await this.supabase
-      .from('epochs')
+      .from('epoch')
       .insert([
         {
           title: createEpochDto.title,
           start_date: createEpochDto.startDate,
           end_date: createEpochDto.endDate,
-          total_reward_pool: createEpochDto.totalRewardPool,
-          individual_activity_ratio: createEpochDto.individualActivityRatio,
-          project_ratio: createEpochDto.projectRatio,
-          max_projects: createEpochDto.maxProjects,
-          status: 'pending',
+          reward_value: createEpochDto.rewardValue,
         },
       ])
       .select()
       .single();
 
-    if (error) throw new Error('에포크 생성 에러');
+    if (error) {
+      throw new Error(`Supabase Error: ${error.message}`);
+    }
+    console.log(data);
     return data;
   }
 

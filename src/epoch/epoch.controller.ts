@@ -26,7 +26,7 @@ export class EpochController {
   constructor(private readonly epochService: EpochService) {}
 
   @Post()
-  @Roles('admin')
+  //@Roles('admin')
   @ApiOperation({ summary: '새로운 에포크 생성' })
   @ApiResponse({
     status: 201,

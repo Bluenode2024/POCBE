@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNumber, IsDate, Min, Max } from 'class-validator';
+import { IsString, IsNumber, IsDate, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateEpochDto {
@@ -27,36 +27,10 @@ export class CreateEpochDto {
   endDate: Date;
 
   @ApiProperty({
-    description: '전체 보상 풀',
+    description: '보상 금액',
     example: 1000000,
   })
   @IsNumber()
   @Min(0)
-  totalRewardPool: number;
-
-  @ApiProperty({
-    description: '개인 활동 비율',
-    example: 0.4,
-  })
-  @IsNumber()
-  @Min(0)
-  @Max(1)
-  individualActivityRatio: number;
-
-  @ApiProperty({
-    description: '프로젝트 비율',
-    example: 0.6,
-  })
-  @IsNumber()
-  @Min(0)
-  @Max(1)
-  projectRatio: number;
-
-  @ApiProperty({
-    description: '최대 프로젝트 수',
-    example: 5,
-  })
-  @IsNumber()
-  @Min(1)
-  maxProjects: number;
+  rewardValue: number;
 }

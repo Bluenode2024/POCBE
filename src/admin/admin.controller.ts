@@ -40,4 +40,9 @@ export class AdminController {
   async approveUserRequest() {
     return this.adminService.approveUserList();
   }
+
+  // @Get('report')
+  // async getReportList() {
+  //   return this.adminService.reportList();
+  // }
 }

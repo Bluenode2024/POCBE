@@ -116,4 +116,8 @@ export class AdminService {
   //     .select('*');
   //   const result = adminRoles.flatMap((adminRole) => {});
   // }
+
+  // async reportList() {
+  //   const { data: }
+  // }
 }

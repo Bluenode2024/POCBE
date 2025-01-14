@@ -13,17 +13,14 @@ export class SignInDto {
 
 export class RegisterDto {
   @IsString()
-  username: string;
-
-  @IsString()
-  fullName: string;
+  name: string;
 
   @IsString()
   department: string;
 
+  @IsString()
+  studentNumber: bigint;
+
   @IsEthereumAddress()
   walletAddress: string;
-
-  @IsString()
-  studentId: string;
 }

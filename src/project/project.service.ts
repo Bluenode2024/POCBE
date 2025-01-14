@@ -18,12 +18,6 @@ export class ProjectService {
     endDate: Date,
     leaderId: string,
   ) {
-    // const { data, error } = await this.supabase.rpc('create_project', {
-    //   p_title: title,
-    //   p_description: description,
-    //   p_leader_id: leaderId,
-    //   p_member_data: memberData,
-    // });
     const { data, error } = await this.supabase
       .from('projects')
       .insert([
@@ -31,7 +25,6 @@ export class ProjectService {
           epoch_id: epochId,
           title: title,
           description: description,
-          members: memberData,
           start_date: startDate,
           end_date: endDate,
           leader_id: leaderId,
@@ -40,6 +33,15 @@ export class ProjectService {
       .select()
       .single();
 
+    for (const mem of memberData) {
+      await this.supabase.from('project_member').insert([
+        {
+          project_id: data.ID,
+          member_id: mem.userId,
+          role: mem.role,
+        },
+      ]);
+    }
     if (error) throw new Error('프로젝트 생성 에러');
     return data;
   }

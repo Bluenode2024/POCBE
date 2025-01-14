@@ -40,7 +40,7 @@ export class AuthService {
 
     // 사용자 조회
     const { data: user, error } = await this.supabase
-      .from('users')
+      .from('user')
       .select('*')
       .eq('wallet_address', signInDto.walletAddress)
       .single();
@@ -94,7 +94,7 @@ export class AuthService {
 
   async register(registerDto: RegisterDto) {
     const { data: existingUser } = await this.supabase
-      .from('users')
+      .from('user')
       .select('*')
       .eq('wallet_address', registerDto.walletAddress)
       .single();
@@ -104,15 +104,14 @@ export class AuthService {
     }
 
     const { data, error } = await this.supabase
-      .from('users')
+      .from('user')
       .insert([
         {
-          username: registerDto.username,
-          full_name: registerDto.fullName,
+          name: registerDto.name,
           department: registerDto.department,
           wallet_address: registerDto.walletAddress,
-          student_id: registerDto.studentId,
-          registration_status: 'pending',
+          student_number: registerDto.studentNumber,
+          request_status: 'pending',
         },
       ])
       .select()
