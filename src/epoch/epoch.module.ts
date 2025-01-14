@@ -2,7 +2,7 @@
 import { Module } from '@nestjs/common';
 import { EpochController } from './epoch.controller';
 import { EpochService } from './epoch.service';
-import { WalletModule } from '../wallet/wallet.module';
+import { WalletModule } from '../blockchain/blockchain.module';
 
 @Module({
   imports: [WalletModule],

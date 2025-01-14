@@ -3,7 +3,7 @@ import { JwtModule, JwtService } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { WalletModule } from '../wallet/wallet.module';
+import { WalletModule } from '../blockchain/blockchain.module';
 
 @Module({
   imports: [

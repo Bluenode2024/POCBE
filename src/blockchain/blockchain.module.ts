@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { WalletService } from './wallet.service';
+import { WalletService } from './blockchain.service';
 import { ethers } from 'ethers';
 import { ConfigService } from '@nestjs/config';
 

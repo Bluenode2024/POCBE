@@ -1,7 +1,7 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { IPFSService } from '../ipfs/ipfs.service';
-import { WalletService } from '../wallet/wallet.service';
+import { WalletService } from '../blockchain/blockchain.service';
 import { CreatePocActivityDto } from './dto/create-poc-activity.dto';
 
 @Injectable()

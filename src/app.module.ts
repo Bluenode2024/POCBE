@@ -11,7 +11,13 @@ import { ActivityModule } from './activity/activity.module';
 import { ProjectModule } from './project/project.module';
 import { EpochModule } from './epoch/epoch.module';
 import { IPFSModule } from './ipfs/ipfs.module';
-import { WalletModule } from './wallet/wallet.module';
+import { WalletModule } from './blockchain/blockchain.module';
+import { UserModule } from './user/user.module';
+import { PocModule } from './poc/poc.module';
+import { ScoreModule } from './score/score.module';
+import { ValidateModule } from './validate/validate.module';
+import { ReportModule } from './report/report.module';
+import { ClaimModule } from './claim/claim.module';
 
 @Module({
   imports: [
@@ -32,6 +38,12 @@ import { WalletModule } from './wallet/wallet.module';
     EpochModule,
     IPFSModule,
     WalletModule,
+    UserModule,
+    PocModule,
+    ScoreModule,
+    ValidateModule,
+    ReportModule,
+    ClaimModule,
   ],
   // RolesGuard를 전역으로 설정
   providers: [

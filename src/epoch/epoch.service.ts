@@ -2,7 +2,7 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { CreateEpochDto } from './dto/create-epoch.dto';
-import { WalletService } from '../wallet/wallet.service';
+import { WalletService } from '../blockchain/blockchain.service';
 
 @Injectable()
 export class EpochService {
