@@ -21,9 +21,6 @@ export class EpochService {
           start_date: createEpochDto.startDate,
           end_date: createEpochDto.endDate,
           total_reward_pool: createEpochDto.totalRewardPool,
-          individual_activity_ratio: createEpochDto.individualActivityRatio,
-          project_ratio: createEpochDto.projectRatio,
-          max_projects: createEpochDto.maxProjects,
           status: 'pending',
         },
       ])
