@@ -82,23 +82,6 @@ export class ProjectService {
     return data;
   }
 
-  async submitFreeriderVote(
-    projectId: string,
-    voterId: string,
-    targetUserId: string,
-    voteTxHash: string,
-  ) {
-    const { data, error } = await this.supabase.rpc('submit_freerider_vote', {
-      p_project_id: projectId,
-      p_voter_id: voterId,
-      p_target_user_id: targetUserId,
-      p_vote_tx_hash: voteTxHash,
-    });
-
-    if (error) throw error;
-    return data;
-  }
-
   async completeProject(
     projectId: string,
     completionStatus: number,

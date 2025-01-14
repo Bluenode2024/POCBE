@@ -31,9 +31,12 @@ export class AdminController {
     return this.adminService.approveUserRegistration(userId, data.adminId);
   }
 
-  @Get('monitor-task-progress')
-  async monitorTask() {
-    return this.adminService.moniterUserTasks();
+  @Post('close-project/:projectId')
+  async closeProject(
+    @Param('projectId') projectId: string,
+    @Body() data: { adminId: string },
+  ) {
+    return this.adminService.closeProject(projectId, data.adminId);
   }
 
   @Get('approve-user-request')
