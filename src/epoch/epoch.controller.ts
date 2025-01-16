@@ -6,6 +6,7 @@ import {
   Param,
   UseGuards,
   Query,
+  Request,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -17,10 +18,12 @@ import { EpochService } from './epoch.service';
 import { CreateEpochDto } from './dto/create-epoch.dto';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { AuthGuard } from 'src/auth/guards/auth.guard';
 
 @ApiTags('epochs')
 @Controller('epochs')
 @UseGuards(RolesGuard)
+@UseGuards(AuthGuard)
 @ApiBearerAuth()
 export class EpochController {
   constructor(private readonly epochService: EpochService) {}
@@ -32,8 +35,9 @@ export class EpochController {
     status: 201,
     description: '에포크가 성공적으로 생성됨',
   })
-  async createEpoch(@Body() createEpochDto: CreateEpochDto) {
-    return this.epochService.createEpoch(createEpochDto);
+  async createEpoch(@Body() createEpochDto: CreateEpochDto, @Request() req) {
+    console.log('req.user', req.user);
+    return this.epochService.createEpoch(createEpochDto, req.user.userId);
   }
 
   @Get('current')

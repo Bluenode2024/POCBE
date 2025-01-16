@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, UnauthorizedException } from '@nestjs/common';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { CreateProjectRequestDto } from './dto/create-project-request';
 
@@ -17,33 +17,76 @@ export class ProjectService {
     startDate: Date,
     endDate: Date,
     leaderId: string,
+    score: number,
   ) {
-    const { data, error } = await this.supabase
-      .from('projects')
+    console.log(leaderId);
+    const { data: projectData, error } = await this.supabase
+      .from('project')
       .insert([
         {
           epoch_id: epochId,
-          title: title,
+          project_name: title,
           description: description,
           start_date: startDate,
           end_date: endDate,
           leader_id: leaderId,
+          approve_status: false,
+          score: score,
         },
       ])
-      .select()
+      .select('*')
       .single();
-
+    if (error) throw new Error(`${error.message}`);
+    console.log(projectData);
     for (const mem of memberData) {
       await this.supabase.from('project_member').insert([
         {
-          project_id: data.ID,
-          member_id: mem.userId,
+          project_id: projectData.id,
+          members_id: mem.userId,
           role: mem.role,
         },
       ]);
     }
     if (error) throw new Error('프로젝트 생성 에러');
-    return data;
+    return projectData;
+  }
+
+  async approveProject(
+    userId: string,
+    data: { adminComment: string },
+    projectId: string,
+  ) {
+    const { data: findAdmin, error: findAdminError } = await this.supabase
+      .from('admin')
+      .select()
+      .eq('user_id', userId)
+      .single();
+    console.log(findAdmin);
+    if (!findAdmin) {
+      throw new UnauthorizedException(`admin이 아닙니다.`);
+    }
+    const { data: adminData, error: adminError } = await this.supabase
+      .from('admin')
+      .select()
+      .eq('user_id', userId)
+      .single();
+    const currentDateTime = new Date().toISOString();
+    const { data: updatedProject, error } = await this.supabase
+      .from('project')
+      .update([
+        {
+          admin_comment: data.adminComment,
+          approved_at: currentDateTime,
+          status: 'Not Started',
+          approve_status: true,
+          approved_by: adminData.id,
+        },
+      ])
+      .eq('id', projectId)
+      .select()
+      .single();
+    if (error || findAdminError || adminError) throw new Error(error.message);
+    return updatedProject;
   }
 
   async updateProjectContribution(

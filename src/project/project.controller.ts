@@ -6,6 +6,7 @@ import {
   Param,
   UseGuards,
   Request,
+  Patch,
 } from '@nestjs/common';
 import { ProjectService } from './project.service';
 import { AuthGuard } from '../auth/guards/auth.guard';
@@ -33,7 +34,18 @@ export class ProjectController {
       newProject.startDate,
       newProject.endDate,
       leaderId,
+      newProject.score,
     );
+  }
+
+  @Patch(':projectId')
+  async approveProject(
+    @Body() data: { adminComment: string },
+    @Param('projectId') projectId: string,
+    @Request() req,
+  ) {
+    const userId = req.user.userId;
+    return this.projectService.approveProject(userId, data, projectId);
   }
 
   @Put('contribution/:projectId/members')

@@ -50,28 +50,28 @@ export class AuthService {
     }
 
     // admin_roles 테이블에서 가장 최근의 active한 관리자 권한 확인
-    const { data: adminRole, error: adminError } = await this.supabase
-      .from('admin_roles')
-      .select('*')
-      .eq('user_id', user.id)
-      .eq('is_active', true)
-      .order('granted_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    // const { data: adminRole } = await this.supabase
+    //   .from('admin_roles')
+    //   .select('*')
+    //   .eq('user_id', user.id)
+    //   .eq('is_active', true)
+    //   .order('granted_at', { ascending: false })
+    //   .limit(1)
+    //   .maybeSingle();
 
-    if (adminError && adminError.code !== 'PGRST116') {
-      console.error('Admin role check error:', adminError);
-    }
+    // if (adminError && adminError.code !== 'PGRST116') {
+    //   console.error('Admin role check error:', adminError);
+    // }
 
-    console.log('adminRole:', adminRole);
+    // console.log('adminRole:', adminRole);
 
     try {
       const payload = {
         sub: signInDto.walletAddress,
         message: signInDto.message,
         userId: user.id,
-        isAdmin: !!adminRole, // admin_roles 테이블에 레코드가 있으면 true
-        roles: adminRole ? ['admin'] : ['user'],
+        //isAdmin: !!adminRole, // admin_roles 테이블에 레코드가 있으면 true
+        //roles: adminRole ? ['admin'] : ['user'],
       };
 
       const secret = this.configService.get('JWT_SECRET_KEY');
@@ -82,8 +82,8 @@ export class AuthService {
         access_token: token,
         user: {
           ...user,
-          isAdmin: !!adminRole,
-          roles: adminRole ? ['admin'] : ['user'],
+          //isAdmin: !!adminRole,
+          //roles: adminRole ? ['admin'] : ['user'],
         },
       };
     } catch (error) {

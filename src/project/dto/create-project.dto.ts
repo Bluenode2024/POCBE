@@ -1,5 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsUUID, IsArray, ValidateNested } from 'class-validator';
+import {
+  IsString,
+  IsUUID,
+  IsArray,
+  ValidateNested,
+  IsNumber,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 class ProjectMemberDto {
@@ -44,8 +50,8 @@ export class CreateProjectDto {
     description: '프로젝트 기여도',
     example: 15,
   })
-  @IsString()
-  contribution: number;
+  @IsNumber()
+  score: number;
 
   @ApiProperty({
     description: '프로젝트 멤버 정보',

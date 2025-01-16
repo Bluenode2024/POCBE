@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, UnauthorizedException } from '@nestjs/common';
 import { SupabaseClient } from '@supabase/supabase-js';
 
 @Injectable()
@@ -8,22 +8,56 @@ export class AdminService {
     private readonly supabase: SupabaseClient,
   ) {}
 
-  async grantAdminRole(
-    granterId: string,
-    newAdminId: string,
-    walletAddress: string,
-    isInitialAdmin: boolean = false,
-  ) {
-    const { data, error } = await this.supabase.rpc('admin_grant_role', {
-      p_granter_id: granterId,
-      p_new_admin_id: newAdminId,
-      p_wallet_address: walletAddress,
-      p_is_initial_admin: isInitialAdmin,
-    });
-
-    if (error) throw error;
+  async grantAdminRole(userId: string, adminId: string) {
+    console.log('userId', userId);
+    console.log('adminId', adminId);
+    const { data: findAdmin, error: findAdminError } = await this.supabase
+      .from('admin')
+      .select()
+      .eq('user_id', adminId)
+      .select()
+      .single();
+    if (!findAdmin) {
+      throw new UnauthorizedException(`admin이 아닙니다.`);
+    }
+    const { data: checkAdmin, error: checkAdminError } = await this.supabase
+      .from('admin')
+      .select()
+      .eq('user_id', userId)
+      .single();
+    if (checkAdmin) {
+      throw new Error(`이미 admin입니다.`);
+    }
+    const { data, error } = await this.supabase
+      .from('admin')
+      .insert([
+        {
+          user_id: userId,
+        },
+      ])
+      .select()
+      .single();
+    if (error || findAdminError || checkAdminError)
+      throw new Error(`admin 역할 부여 에러 ${error.stack}`);
     return data;
   }
+
+  // async grantAdminRole(
+  //   granterId: string,
+  //   newAdminId: string,
+  //   walletAddress: string,
+  //   isInitialAdmin: boolean = false,
+  // ) {
+  //   const { data, error } = await this.supabase.rpc('admin_grant_role', {
+  //     p_granter_id: granterId,
+  //     p_new_admin_id: newAdminId,
+  //     p_wallet_address: walletAddress,
+  //     p_is_initial_admin: isInitialAdmin,
+  //   });
+
+  //   if (error) throw error;
+  //   return data;
+  // }
 
   async approveUserRegistration(userId: string, adminId: string) {
     const { data, error } = await this.supabase.rpc(

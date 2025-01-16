@@ -1,5 +1,10 @@
 // src/epoch/epoch.service.ts
-import { Injectable, Inject, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  Inject,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { CreateEpochDto } from './dto/create-epoch.dto';
 import { WalletService } from '../blockchain/blockchain.service';
@@ -12,8 +17,17 @@ export class EpochService {
     private readonly walletService: WalletService,
   ) {}
 
-  async createEpoch(createEpochDto: CreateEpochDto) {
-    console.log(createEpochDto);
+  async createEpoch(createEpochDto: CreateEpochDto, userId: string) {
+    console.log(userId);
+    const { data: findAdmin, error: findAdminError } = await this.supabase
+      .from('admin')
+      .select()
+      .eq('user_id', userId)
+      .single();
+    console.log(findAdmin);
+    if (!findAdmin) {
+      throw new UnauthorizedException(`admin이 아닙니다.`);
+    }
     const { data, error } = await this.supabase
       .from('epoch')
       .insert([
@@ -27,7 +41,7 @@ export class EpochService {
       .select()
       .single();
 
-    if (error) {
+    if (error || findAdminError) {
       throw new Error(`Supabase Error: ${error.message}`);
     }
     console.log(data);
