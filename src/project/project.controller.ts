@@ -13,23 +13,20 @@ import { AuthGuard } from '../auth/guards/auth.guard';
 import { CreateProjectRequestDto } from './dto/create-project-request';
 import { CreateProjectDto } from './dto/create-project.dto';
 
-@Controller('project')
+@Controller('projects')
 @UseGuards(AuthGuard)
 export class ProjectController {
   constructor(private readonly projectService: ProjectService) {}
 
-  @Post(':epochId')
-  async createProject(
-    @Param('epochId') epochId: string,
-    @Body() newProject: CreateProjectDto,
-    @Request() req,
-  ) {
+  @Post()
+  async createProject(@Body() newProject: CreateProjectDto, @Request() req) {
     const leaderId = req.user.userId;
     console.log('req.user', req.user);
     return this.projectService.createProject(
-      epochId,
+      newProject.epochId,
       newProject.title,
       newProject.description,
+      newProject.volume,
       newProject.memberData,
       newProject.startDate,
       newProject.endDate,

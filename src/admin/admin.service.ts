@@ -20,11 +20,12 @@ export class AdminService {
     if (!findAdmin) {
       throw new UnauthorizedException(`admin이 아닙니다.`);
     }
-    const { data: checkAdmin, error: checkAdminError } = await this.supabase
+    const { data: checkAdmin } = await this.supabase
       .from('admin')
       .select()
       .eq('user_id', userId)
       .single();
+    console.log(checkAdmin);
     if (checkAdmin) {
       throw new Error(`이미 admin입니다.`);
     }
@@ -37,8 +38,7 @@ export class AdminService {
       ])
       .select()
       .single();
-    if (error || findAdminError || checkAdminError)
-      throw new Error(`admin 역할 부여 에러 ${error.stack}`);
+    if (error || findAdminError) throw new Error(`admin 역할 부여 에러`);
     return data;
   }
 

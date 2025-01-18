@@ -5,6 +5,7 @@ import {
   IsArray,
   ValidateNested,
   IsNumber,
+  isString,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -39,12 +40,19 @@ export class CreateProjectDto {
   @IsString()
   description: string;
 
-  // @ApiProperty({
-  //   description: '프로젝트 리더 ID',
-  //   example: '123e4567-e89b-12d3-a456-426614174000',
-  // })
-  // @IsUUID()
-  // leaderId: string;
+  @ApiProperty({
+    description: '에포크 ID',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @IsUUID()
+  epochId: string;
+
+  @ApiProperty({
+    description: '프로젝트 규모',
+    example: 'large',
+  })
+  @IsString()
+  volume: string;
 
   @ApiProperty({
     description: '프로젝트 기여도',

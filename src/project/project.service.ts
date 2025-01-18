@@ -1,4 +1,4 @@
-import { Injectable, Inject, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Inject, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { CreateProjectRequestDto } from './dto/create-project-request';
 
@@ -13,6 +13,7 @@ export class ProjectService {
     epochId: string,
     title: string,
     description: string,
+    volume:string,
     memberData: any,
     startDate: Date,
     endDate: Date,
@@ -20,6 +21,18 @@ export class ProjectService {
     score: number,
   ) {
     console.log(leaderId);
+
+    const { data: epoch, error: epochError } = await this.supabase
+      .from('epoch')
+      .select()
+      .eq('id', epochId)
+      .single();
+    if (epoch.approved_by == null) {
+      throw new BadRequestException('승인되지 않은 에포크입니다.');
+    }
+    if (epochError) {
+      throw new Error(`해당 에포크를 찾을 수 없습니다. ${epochError.message}`);
+    }
     const { data: projectData, error } = await this.supabase
       .from('project')
       .insert([
@@ -27,6 +40,7 @@ export class ProjectService {
           epoch_id: epochId,
           project_name: title,
           description: description,
+          volume: volume,
           start_date: startDate,
           end_date: endDate,
           leader_id: leaderId,

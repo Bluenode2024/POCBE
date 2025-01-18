@@ -7,6 +7,7 @@ import {
   UseGuards,
   Query,
   Request,
+  Patch,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -38,6 +39,12 @@ export class EpochController {
   async createEpoch(@Body() createEpochDto: CreateEpochDto, @Request() req) {
     console.log('req.user', req.user);
     return this.epochService.createEpoch(createEpochDto, req.user.userId);
+  }
+
+  @Patch(':epochId')
+  async approveEpoch(@Param('epochId') epochId: string, @Request() req) {
+    const userId = req.user.userId;
+    return this.epochService.approveEpoch(epochId, userId);
   }
 
   @Get('current')

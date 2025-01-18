@@ -39,13 +39,16 @@ export class AuthService {
     }
 
     // 사용자 조회
-    const { data: user, error } = await this.supabase
+    const { data: user, error: userError } = await this.supabase
       .from('user')
       .select('*')
       .eq('wallet_address', signInDto.walletAddress)
       .single();
 
-    if (error || !user) {
+    if (user.approved_at == null) {
+      throw new UnauthorizedException('User not found');
+    }
+    if (userError || !user) {
       throw new UnauthorizedException('User not found');
     }
 

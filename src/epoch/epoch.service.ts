@@ -48,6 +48,37 @@ export class EpochService {
     return data;
   }
 
+  async approveEpoch(epochId: string, userId: string) {
+    const { data: findAdmin, error: findAdminError } = await this.supabase
+      .from('admin')
+      .select()
+      .eq('user_id', userId)
+      .single();
+
+    if (!findAdmin) {
+      throw new UnauthorizedException(`admin이 아닙니다.`);
+    }
+
+    if (findAdminError) {
+      throw new Error(`어드민 탐색 에러 ${findAdminError.message}`);
+    }
+
+    const { data, error } = await this.supabase
+      .from('epoch')
+      .update([
+        {
+          status: 'active',
+          approved_by: findAdmin.id,
+        },
+      ])
+      .eq('id', epochId)
+      .select()
+      .single();
+
+    if (error) throw new Error(`에포크 승인 에러 ${error.message}`);
+    return data;
+  }
+
   async getCurrentEpoch() {
     const { data, error } = await this.supabase
       .from('epochs')
