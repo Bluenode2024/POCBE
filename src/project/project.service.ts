@@ -1,4 +1,9 @@
-import { Injectable, Inject, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  Inject,
+  UnauthorizedException,
+  BadRequestException,
+} from '@nestjs/common';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { CreateProjectRequestDto } from './dto/create-project-request';
 
@@ -13,7 +18,7 @@ export class ProjectService {
     epochId: string,
     title: string,
     description: string,
-    volume:string,
+    volume: string,
     memberData: any,
     startDate: Date,
     endDate: Date,
@@ -76,8 +81,8 @@ export class ProjectService {
       .eq('user_id', userId)
       .single();
     console.log(findAdmin);
-    if (!findAdmin) {
-      throw new UnauthorizedException(`admin이 아닙니다.`);
+    if (!findAdmin || findAdmin.permission != 'Initial') {
+      throw new UnauthorizedException(`이니셜 어드민이 아닙니다.`);
     }
     const { data: adminData, error: adminError } = await this.supabase
       .from('admin')

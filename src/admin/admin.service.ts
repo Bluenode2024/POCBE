@@ -17,8 +17,8 @@ export class AdminService {
       .eq('user_id', adminId)
       .select()
       .single();
-    if (!findAdmin) {
-      throw new UnauthorizedException(`admin이 아닙니다.`);
+    if (!findAdmin || findAdmin.permission != 'Initial') {
+      throw new UnauthorizedException(`이니셜 어드민이 아닙니다.`);
     }
     const { data: checkAdmin } = await this.supabase
       .from('admin')
