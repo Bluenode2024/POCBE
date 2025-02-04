@@ -25,8 +25,8 @@ export class EpochService {
       .eq('user_id', userId)
       .single();
     console.log(findAdmin);
-    if (!findAdmin) {
-      throw new UnauthorizedException(`admin이 아닙니다.`);
+    if (!findAdmin || findAdmin.permission != 'Initial') {
+      throw new UnauthorizedException(`이니셜 어드민이 아닙니다.`);
     }
     const { data, error } = await this.supabase
       .from('epoch')
@@ -55,8 +55,8 @@ export class EpochService {
       .eq('user_id', userId)
       .single();
 
-    if (!findAdmin) {
-      throw new UnauthorizedException(`admin이 아닙니다.`);
+    if (!findAdmin || findAdmin.permission != 'Initial') {
+      throw new UnauthorizedException(`이니셜 어드민이 아닙니다.`);
     }
 
     if (findAdminError) {
