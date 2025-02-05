@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  ConflictException,
   Inject,
   Injectable,
   UnauthorizedException,
@@ -66,7 +65,7 @@ export class PocService {
         .eq('members_id', userId)
         .single();
       if (!checkUserProject) {
-        throw new ConflictException(`해당 프로젝트의 참여자가 아닙니다.`);
+        throw new UnauthorizedException(`해당 프로젝트의 참여자가 아닙니다.`);
       }
     }
     const { data: taskData, error: taskError } = await this.supabase
