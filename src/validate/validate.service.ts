@@ -1,9 +1,15 @@
-import { Injectable, Inject } from '@nestjs/common';
+import {
+  Injectable,
+  Inject,
+  BadRequestException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { SupabaseClient } from '@supabase/supabase-js';
 import {
   CreateValidationDto,
   CreateValidatorDto,
-} from './dto/create-validate-dto';
+  UpdateValidationDto,
+} from './validate.dto';
 
 @Injectable()
 export class ValidateService {
@@ -17,7 +23,7 @@ export class ValidateService {
       await this.supabase
         .from('user')
         .select()
-        .eq('wallet_address', createValidatorDto.stakingContractAddress)
+        .eq('wallet_address', createValidatorDto.walletAddress)
         .single();
 
     if (contractAddressOwnerError) {
@@ -28,7 +34,7 @@ export class ValidateService {
       .insert([
         {
           user_id: contractAddressOwner.id,
-          staking_contract_address: createValidatorDto.stakingContractAddress,
+          staking_contract_address: createValidatorDto.walletAddress,
         },
       ])
       .select('*')
@@ -107,5 +113,54 @@ export class ValidateService {
       throw new Error(`검증 에러: ${validationError.message}`);
     }
     return validationData;
+  }
+
+  async updateValidation(
+    updateValidationDto: UpdateValidationDto,
+    userId: string,
+    validationId: string,
+  ) {
+    const { data: validationData, error: validationError } = await this.supabase
+      .from('validation')
+      .select()
+      .eq('id', validationId)
+      .single();
+    if (validationError) {
+      throw new BadRequestException(
+        `검증 조회 중에 에러가 발생하였습니다.: ${validationError.message}`,
+      );
+    }
+    const validatorId = validationData.vali_id;
+    const { data: checkValidator, error: checkValidatorError } =
+      await this.supabase
+        .from('validator')
+        .select()
+        .eq('id', validatorId)
+        .single();
+    if (checkValidator.user_id != userId) {
+      throw new UnauthorizedException('검증인이 아닙니다.');
+    }
+    if (checkValidatorError) {
+      throw new BadRequestException(
+        `검증인 확인 중에 에러가 발생하였습니다.: ${checkValidatorError.message}`,
+      );
+    }
+    const { data: updateValidationData, error: updateValidationError } =
+      await this.supabase
+        .from('validation')
+        .update({
+          status: 'success',
+          comment: updateValidationDto.comment,
+          reward_contract_address: updateValidationDto.rewardContractAddress,
+        })
+        .eq('id', validationId)
+        .select()
+        .single();
+    if (updateValidationError) {
+      throw new BadRequestException(
+        `검증 완수 업데이트 중에 에러가 발생하였습니다.: ${updateValidationError.message}`,
+      );
+    }
+    return updateValidationData;
   }
 }

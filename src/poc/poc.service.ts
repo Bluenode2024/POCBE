@@ -1,4 +1,9 @@
-import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { CreatePocDto } from './dto/create-poc.dto';
 import { CreateTaskDto } from './dto/create-task-dto';
@@ -21,7 +26,9 @@ export class PocService {
     }
 
     if (findAdminError) {
-      throw new Error(`어드민 검사 에러 ${findAdminError.message}`);
+      throw new BadRequestException(
+        `어드민 검사 에러 ${findAdminError.message}`,
+      );
     }
 
     const { data: pocData, error: pocDataError } = await this.supabase
@@ -40,7 +47,7 @@ export class PocService {
       .single();
 
     if (pocDataError) {
-      throw new Error(`POC 생성 에러: ${pocDataError.message}`);
+      throw new BadRequestException(`POC 생성 에러: ${pocDataError.message}`);
     }
     return pocData;
   }
@@ -50,6 +57,17 @@ export class PocService {
     userId: string,
     pocId: string,
   ) {
+    if (createTaskDto.projectId) {
+      const { data: checkUserProject } = await this.supabase
+        .from('project_member')
+        .select()
+        .eq('project_id', createTaskDto.projectId)
+        .eq('members_id', userId)
+        .single();
+      if (!checkUserProject) {
+        throw new UnauthorizedException(`해당 프로젝트의 참여자가 아닙니다.`);
+      }
+    }
     const { data: taskData, error: taskError } = await this.supabase
       .from('task')
       .insert([
@@ -65,7 +83,7 @@ export class PocService {
       .single();
 
     if (taskError) {
-      throw new Error(`task 생성 에러: ${taskError.message}`);
+      throw new BadRequestException(`task 생성 에러: ${taskError.message}`);
     }
 
     return taskData;

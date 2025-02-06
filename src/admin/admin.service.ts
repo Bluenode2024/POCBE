@@ -159,7 +159,7 @@ export class AdminService {
       .select('*');
 
     if (userError || adminRoleError || projectError) {
-      throw new Error('데이터를 가져오는 중 에러가 발생했습니다.');
+      throw new Error('데이터를 가져오는 중에 에러가 발생했습니다.');
     }
 
     const result = adminRoles.flatMap((adminRole) => {

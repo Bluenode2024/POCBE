@@ -8,5 +8,13 @@ export class CreateValidationDto {
 
 export class CreateValidatorDto {
   @IsString()
-  stakingContractAddress: string;
+  walletAddress: string;
+}
+
+export class UpdateValidationDto {
+  @IsString()
+  comment: string;
+
+  @IsString()
+  rewardContractAddress: string;
 }
