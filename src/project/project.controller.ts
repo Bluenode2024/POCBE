@@ -2,105 +2,57 @@ import {
   Controller,
   Post,
   Body,
-  Put,
+  Get,
   Param,
+  Req,
   UseGuards,
-  Request,
-  Patch,
 } from '@nestjs/common';
 import { ProjectService } from './project.service';
-import { AuthGuard } from '../auth/guards/auth.guard';
-import { CreateProjectRequestDto } from './dto/create-project-request';
 import { CreateProjectDto } from './dto/create-project.dto';
+import { ApproveProjectDto } from './dto/approve-project.dto';
+import { UpdateRepositoryDto } from './dto/update-repository.dto';
+import { AuthGuard } from '../auth/guards/auth.guard';
 
 @Controller('projects')
-@UseGuards(AuthGuard)
 export class ProjectController {
   constructor(private readonly projectService: ProjectService) {}
 
+  /**
+   * ✅ 프로젝트 신청 (리더가 신청)
+   */
   @Post()
-  async createProject(@Body() newProject: CreateProjectDto, @Request() req) {
-    const leaderId = req.user.userId;
-    console.log('req.user', req.user);
-    return this.projectService.createProject(
-      newProject.epochId,
-      newProject.title,
-      newProject.description,
-      newProject.volume,
-      newProject.memberData,
-      newProject.startDate,
-      newProject.endDate,
-      leaderId,
-      newProject.score,
-    );
+  @UseGuards(AuthGuard) // JWT 인증 미들웨어 적용
+  async createProject(@Body() createProjectDto: CreateProjectDto, @Req() req) {
+    const walletAddress = req.user.wallet_address; // JWT에서 wallet_address 가져오기
+    return this.projectService.createProject(createProjectDto, walletAddress);
   }
 
-  @Patch(':projectId')
+  /**
+   * ✅ 프로젝트 승인/거절
+   */
+  @Post('approve')
+  @UseGuards(AuthGuard) // JWT 인증 미들웨어 적용
   async approveProject(
-    @Body() data: { adminComment: string },
-    @Param('projectId') projectId: string,
-    @Request() req,
+    @Body() approveProjectDto: ApproveProjectDto,
+    @Req() req,
   ) {
-    const userId = req.user.userId;
-    return this.projectService.approveProject(userId, data, projectId);
+    const walletAddress = req.user.wallet_address; // 승인자의 wallet_address 가져오기
+    return this.projectService.approveProject(approveProjectDto, walletAddress);
   }
 
-  @Put('contribution/:projectId/members')
-  async updateMemberContribution(
-    @Param('projectId') projectId: string,
-    @Body()
-    data: {
-      userId: string;
-      contributionScore: number;
-    },
-  ) {
-    return this.projectService.updateMemberProjectContribution(
-      projectId,
-      data.userId,
-      data.contributionScore,
-    );
+  /**
+   * ✅ 프로젝트에 새로운 레포지토리 추가 (중복 방지)
+   */
+  @Post('repository')
+  async insertRepository(@Body() updateRepositoryDto: UpdateRepositoryDto) {
+    return this.projectService.insertRepository(updateRepositoryDto);
   }
 
-  @Put('contribution/:projectId')
-  async updateContribution(
-    @Param('projectId') projectId: string,
-    @Body()
-    data: {
-      userId: string;
-      contributionScore: number;
-    },
-  ) {
-    return this.projectService.updateProjectContribution(
-      projectId,
-      data.userId,
-      data.contributionScore,
-    );
-  }
-
-  @Post('complete/:projectId')
-  async completeProject(
-    @Param('projectId') projectId: string,
-    @Body()
-    data: {
-      completionStatus: number;
-      verificationTxHash: string;
-      ipfsHash: string;
-    },
-  ) {
-    return this.projectService.completeProject(
-      projectId,
-      data.completionStatus,
-      data.verificationTxHash,
-      data.ipfsHash,
-    );
-  }
-
-  @Post('request')
-  async createProjectRequest(
-    @Body() createProjectRequestDto: CreateProjectRequestDto,
-  ) {
-    return this.projectService.projectRequestRegistration(
-      createProjectRequestDto,
-    );
+  /**
+   * ✅ 특정 상태의 프로젝트 조회
+   */
+  @Get('status/:status')
+  async getProjectsByStatus(@Param('status') status: string) {
+    return this.projectService.getProjectsByStatus(status);
   }
 }

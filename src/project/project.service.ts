@@ -1,183 +1,205 @@
-import {
-  Injectable,
-  Inject,
-  UnauthorizedException,
-  BadRequestException,
-} from '@nestjs/common';
-import { SupabaseClient } from '@supabase/supabase-js';
-import { CreateProjectRequestDto } from './dto/create-project-request';
+import { Injectable } from '@nestjs/common';
+import { SupabaseService } from '../supabase.service';
+import { CreateProjectDto } from './dto/create-project.dto';
+import { ApproveProjectDto } from './dto/approve-project.dto';
+import { UpdateRepositoryDto } from './dto/update-repository.dto';
 
 @Injectable()
 export class ProjectService {
-  constructor(
-    @Inject('SUPABASE_CLIENT')
-    private readonly supabase: SupabaseClient,
-  ) {}
+  constructor(private readonly supabaseService: SupabaseService) {}
 
-  async createProject(
-    epochId: string,
-    title: string,
-    description: string,
-    volume: string,
-    memberData: any,
-    startDate: Date,
-    endDate: Date,
-    leaderId: string,
-    score: number,
-  ) {
-    console.log(leaderId);
+  /**
+   * 프로젝트 생성 (리더가 신청)
+   */
+  async createProject(dto: CreateProjectDto, walletAddress: string) {
+    const supabase = this.supabaseService.getClient();
 
-    const { data: epoch, error: epochError } = await this.supabase
-      .from('epoch')
-      .select()
-      .eq('id', epochId)
+    // 1️⃣ 신청자의 ID 가져오기 (wallet_address 기준 검색)
+    const { data: applicant, error: userError } = await supabase
+      .from('user')
+      .select('id')
+      .eq('wallet_address', walletAddress) // 이메일 대신 wallet_address 사용
       .single();
-    if (epoch.approved_by == null) {
-      throw new BadRequestException('승인되지 않은 에포크입니다.');
-    }
-    if (epochError) {
-      throw new Error(`해당 에포크를 찾을 수 없습니다. ${epochError.message}`);
-    }
-    const { data: projectData, error } = await this.supabase
+
+    if (userError || !applicant) throw new Error('Applicant not found');
+
+    // 2️⃣ 프로젝트 추가 (leader_id를 신청자의 ID로 설정)
+    const { data: project, error: projectError } = await supabase
       .from('project')
       .insert([
         {
-          epoch_id: epochId,
-          project_name: title,
-          description: description,
-          volume: volume,
-          start_date: startDate,
-          end_date: endDate,
-          leader_id: leaderId,
+          project_name: dto.project_name,
+          description: dto.description,
+          leader_id: applicant.id,
+          start_date: dto.start_date,
+          end_date: dto.end_date,
           approve_status: false,
-          score: score,
+          status: 'pending',
         },
       ])
-      .select('*')
+      .select()
       .single();
-    if (error) throw new Error(`${error.message}`);
-    console.log(projectData);
-    for (const mem of memberData) {
-      await this.supabase.from('project_member').insert([
+
+    if (projectError) throw new Error(projectError.message);
+
+    // 3️⃣ 리더를 project_member 테이블에 추가 (role: 'leader')
+    await supabase.from('project_member').insert([
+      {
+        project_id: project.id,
+        members_id: applicant.id,
+        role: 'leader',
+      },
+    ]);
+
+    for (const member of dto.members) {
+      const { data: user, error: memberError } = await supabase
+        .from('user')
+        .select('id')
+        .eq('name', member.member_name) // ✅ 입력된 이름과 일치하는 user 찾기
+        .single();
+
+      if (memberError || !user) {
+        console.warn(
+          `Warning: Member ${member.member_name} not found, skipping.`,
+        );
+        continue; // 멤버가 없으면 해당 멤버 추가를 건너뜀
+      }
+
+      await supabase.from('project_member').insert([
         {
-          project_id: projectData.id,
-          members_id: mem.userId,
-          role: mem.role,
+          project_id: project.id,
+          members_id: user.id, // ✅ 조회한 ID를 저장
+          role: 'member',
         },
       ]);
     }
-    if (error) throw new Error('프로젝트 생성 에러');
-    return projectData;
-  }
-
-  async approveProject(
-    userId: string,
-    data: { adminComment: string },
-    projectId: string,
-  ) {
-    const { data: findAdmin, error: findAdminError } = await this.supabase
-      .from('admin')
-      .select()
-      .eq('user_id', userId)
-      .single();
-    console.log(findAdmin);
-    if (!findAdmin || findAdmin.permission != 'Initial') {
-      throw new UnauthorizedException(`이니셜 어드민이 아닙니다.`);
+    if (dto.repo_link && dto.repo_link.length > 0) {
+      for (const repo of dto.repo_link) {
+        await supabase.from('repository').insert([
+          {
+            project_id: project.id,
+            repo_link: repo, // 여러 개의 레포지토리 링크 추가
+          },
+        ]);
+      }
     }
-    const { data: adminData, error: adminError } = await this.supabase
-      .from('admin')
-      .select()
-      .eq('user_id', userId)
+
+    return project;
+  }
+  /**
+   * 프로젝트 승인/거절
+   */
+  async approveProject(dto: ApproveProjectDto, walletAddress: string) {
+    const supabase = this.supabaseService.getClient();
+    // 승인자의 ID 가져오기 (wallet_address 기준 검색)
+    const { data: applicant, error: userError } = await supabase
+      .from('user')
+      .select('id')
+      .eq('wallet_address', walletAddress) // 이메일 대신 wallet_address 사용
       .single();
-    const currentDateTime = new Date().toISOString();
-    const { data: updatedProject, error } = await this.supabase
+
+    if (userError || !applicant) throw new Error('Applicant not found');
+
+    // 1️⃣ 프로젝트 상태 업데이트
+    const { data: project, error: projectError } = await supabase
       .from('project')
-      .update([
-        {
-          admin_comment: data.adminComment,
-          approved_at: currentDateTime,
-          status: 'Not Started',
-          approve_status: true,
-          approved_by: adminData.id,
-        },
-      ])
-      .eq('id', projectId)
+      .update({
+        status: dto.approve_status,
+        approved_by: applicant.id,
+        admin_comment: dto.admin_comment,
+        approved_at: new Date(),
+      })
+      .eq('id', dto.project_id)
       .select()
       .single();
-    if (error || findAdminError || adminError) throw new Error(error.message);
-    return updatedProject;
-  }
 
-  async updateProjectContribution(
-    projectId: string,
-    userId: string,
-    contributionScore: number,
-  ) {
-    const { data, error } = await this.supabase.rpc(
-      'update_member_project_contribution',
-      {
-        p_project_id: projectId,
-        p_user_id: userId,
-        p_contribution_score: contributionScore,
-      },
-    );
+    if (projectError) throw new Error(projectError.message);
 
-    if (error) throw error;
-    return data;
-  }
+    // 3️⃣ 해당 프로젝트의 레포지토리 링크 가져오기
+    const { data: repositories } = await supabase
+      .from('repository')
+      .select('repo_link')
+      .eq('project_id', dto.project_id);
 
-  async updateMemberProjectContribution(
-    projectId: string,
-    userId: string,
-    contributionScore: number,
-  ) {
-    const { data, error } = await this.supabase.rpc(
-      'update_member_project_contribution',
-      {
-        p_project_id: projectId,
-        p_user_id: userId,
-        p_contribution_score: contributionScore,
-      },
-    );
+    if (repositories.length > 0) {
+      // ✅ 4️⃣ 레포지토리가 존재하면 웹훅 호출
+      const webhookUrl = 'http://localhost:4000/webhook'; // 기여도 평가 프로그램의 웹훅 URL
 
-    if (error) throw error;
-    return data;
-  }
-
-  async completeProject(
-    projectId: string,
-    completionStatus: number,
-    verificationTxHash: string,
-    ipfsHash: string,
-  ) {
-    const { data, error } = await this.supabase.rpc('complete_project', {
-      p_project_id: projectId,
-      p_completion_status: completionStatus,
-      p_verification_tx_hash: verificationTxHash,
-      p_ipfs_hash: ipfsHash,
-    });
-
-    if (error) throw error;
-    return data;
-  }
-
-  async projectRequestRegistration(
-    createProjectRequestDto: CreateProjectRequestDto,
-  ) {
-    const { data, error } = await this.supabase
-      .from('project_requests')
-      .insert([
-        {
-          epoch_id: createProjectRequestDto.epochId,
-          requested_by: createProjectRequestDto.requestedBy,
-          title: createProjectRequestDto.title,
-          description: createProjectRequestDto.description,
-          proposed_members: createProjectRequestDto.proposedMembers,
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer TEST_SECRET_KEY`, // 보안 강화를 위한 API Key
         },
-      ])
-      .select()
+        body: JSON.stringify({
+          project_name: project.project_name,
+          repositories: repositories.map((repo) => repo.repo_link),
+        }),
+      });
+
+      if (!response.ok) {
+        console.error('❌ Webhook failed:', await response.text());
+      } else {
+        console.log('✅ Webhook sent successfully!');
+      }
+    }
+
+    return project;
+  }
+
+  /**
+   * 승인된 프로젝트에 GitHub 링크 추가
+   */
+  async insertRepository(dto: UpdateRepositoryDto) {
+    const supabase = this.supabaseService.getClient();
+
+    // 1️⃣ 프로젝트 존재 여부 확인
+    const { data: project, error: projectError } = await supabase
+      .from('project')
+      .select('approve_status')
+      .eq('id', dto.project_id)
       .single();
-    if (error) throw error;
+
+    if (projectError || !project) throw new Error('Project not found');
+    if (!project.approve_status) throw new Error('Project is not approved');
+
+    // 2️⃣ 중복된 레포지토리 링크 여부 확인
+    const { data: existingRepo, error: repoError } = await supabase
+      .from('repository')
+      .select('repo_link')
+      .eq('project_id', dto.project_id)
+      .eq('repo_link', dto.repo_link)
+      .single();
+
+    if (existingRepo) {
+      throw new Error('Repository link already exists for this project');
+    }
+
+    // 3️⃣ 새로운 레포지토리 링크 추가
+    const { error: insertError } = await supabase.from('repository').insert([
+      {
+        project_id: dto.project_id,
+        repo_link: dto.repo_link,
+      },
+    ]);
+
+    if (insertError) throw new Error(insertError.message);
+
+    return { message: 'Repository link added successfully' };
+  }
+  /**
+   * 특정 상태의 프로젝트 조회
+   */
+  async getProjectsByStatus(status: string) {
+    const supabase = this.supabaseService.getClient();
+
+    const { data, error } = await supabase
+      .from('project')
+      .select('*')
+      .eq('status', status);
+
+    if (error) throw new Error(error.message);
+
     return data;
   }
 }
