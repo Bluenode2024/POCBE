@@ -39,7 +39,7 @@ export class ValidateService implements OnModuleInit {
     for (const vali of pendingValidations) {
       const currentTimeMinusCreatedAt =
         new Date().getTime() - new Date(vali.created_at).getTime(); // 현재 시간 - 검증 생성 시간
-      const remainingTime = 60 * 1000 - currentTimeMinusCreatedAt; // 타이머의 남은 시간 계산
+      const remainingTime = 24 * 60 * 60 * 1000 - currentTimeMinusCreatedAt; // 타이머의 남은 시간 계산
 
       if (remainingTime > 0) {
         // 타이머 시간이 아직 남았다면 검증 기간의 남은 기간 재설정
@@ -59,7 +59,7 @@ export class ValidateService implements OnModuleInit {
     for (const vali of successValidations) {
       const currentTimeMinusCreatedAt =
         new Date().getTime() - new Date(vali.created_at).getTime(); // 현재 시간 - 검증 생성 시간
-      const remainingTime = 60 * 1000 - currentTimeMinusCreatedAt; // 타이머의 남은 시간 계산
+      const remainingTime = 24 * 60 * 60 * 1000 - currentTimeMinusCreatedAt; // 타이머의 남은 시간 계산
 
       if (remainingTime > 0) {
         // 타이머 시간이 아직 남았다면 리포트의 남은 기간 재설정
@@ -150,7 +150,7 @@ export class ValidateService implements OnModuleInit {
     }
 
     // 검증 생성과 동시에 타이머 설정 (시작)
-    this.setValidationPeriodTimer(validationData.id, 60 * 1000);
+    this.setValidationPeriodTimer(validationData.id, 24 * 60 * 60 * 1000);
 
     return validationData;
   }
@@ -235,7 +235,7 @@ export class ValidateService implements OnModuleInit {
     }
 
     // 검증인 및 created_at 업데이트하고 타이머 재시작
-    this.setValidationPeriodTimer(validationId, 60 * 1000);
+    this.setValidationPeriodTimer(validationId, 24 * 60 * 60 * 1000);
     return valiData;
   }
 
@@ -297,7 +297,7 @@ export class ValidateService implements OnModuleInit {
     }
 
     // 검증 업데이트와 동시에 리포트 기간 시작
-    this.setReportPeriodTimer(validationId, 60 * 1000);
+    this.setReportPeriodTimer(validationId, 24 * 60 * 60 * 1000);
 
     return updateValidationData;
   }
