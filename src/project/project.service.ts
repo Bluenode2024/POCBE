@@ -164,7 +164,7 @@ export class ProjectService {
     if (!project.approve_status) throw new Error('Project is not approved');
 
     // 2️⃣ 중복된 레포지토리 링크 여부 확인
-    const { data: existingRepo, error: repoError } = await supabase
+    const { data: existingRepo } = await supabase
       .from('repository')
       .select('repo_link')
       .eq('project_id', dto.project_id)

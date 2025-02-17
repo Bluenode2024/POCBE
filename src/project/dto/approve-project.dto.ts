@@ -1,4 +1,4 @@
-import { IsUUID, IsBoolean, IsOptional, IsString } from 'class-validator';
+import { IsUUID, IsOptional, IsString } from 'class-validator';
 
 export class ApproveProjectDto {
   @IsUUID()

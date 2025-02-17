@@ -79,6 +79,12 @@ export class EpochService {
     return data;
   }
 
+  // async getEpochList() {
+  //   const { data: epochListData, error: epochListError } = await this.supabase
+  //     .from('epoch')
+  //     .select(``);
+  // }
+
   async getCurrentEpoch() {
     const { data, error } = await this.supabase
       .from('epochs')

@@ -106,7 +106,7 @@ export class ReportService {
     const { data: validationData, error: validationError } = await this.supabase
       .from('validation')
       .update({
-        status: 'reject',
+        status: 'reported',
       })
       .eq('id', validationId)
       .select()
