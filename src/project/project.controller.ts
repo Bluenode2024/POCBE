@@ -36,8 +36,7 @@ export class ProjectController {
     @Body() approveProjectDto: ApproveProjectDto,
     @Req() req,
   ) {
-    const walletAddress = req.user.wallet_address; // 승인자의 wallet_address 가져오기
-    return this.projectService.approveProject(approveProjectDto, walletAddress);
+    return this.projectService.approveProject(approveProjectDto, req);
   }
 
   /**

@@ -34,4 +34,17 @@ export class UserService {
     }
     return data;
   }
+
+  // 입력받은 wallet_address에 매핑된 user_id를 가져옴
+  async getUserId(walletAddress: string): Promise<string> {
+    const { data, error } = await this.supabase
+      .from('user')
+      .select('id')
+      .eq('wallet_address', walletAddress)
+      .single();
+
+    if (error || !data) throw new Error('User not found');
+
+    return data.id;
+  }
 }

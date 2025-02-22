@@ -1,126 +1,90 @@
-import {
-  Injectable,
-  Inject,
-  BadRequestException,
-  UnauthorizedException,
-} from '@nestjs/common';
-import { SupabaseClient } from '@supabase/supabase-js';
-import { CreateReportDto, UpdateReportDto } from './report.dto';
-
+import { Injectable } from '@nestjs/common';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { ValidateService } from '../validate/validate.service';
+import { AdminService } from '../admin/admin.service';
+import { UserService } from '../user/user.service';
+import { CreateReportDto, CreateReportResponseDto } from './dto/report.dto';
 @Injectable()
 export class ReportService {
-  constructor(
-    @Inject('SUPABASE_CLIENT')
-    private readonly supabase: SupabaseClient,
-  ) {}
+  private supabase: SupabaseClient;
 
-  async createReport(createReportDto: CreateReportDto, userId: string) {
-    const { data: userData, error: userError } = await this.supabase
-      .from('user')
-      .select()
-      .eq('id', userId)
-      .single();
-    if (!userData || !userData.approved_at) {
-      throw new UnauthorizedException(`리포트를 등록할 권한이 없습니다.`);
-    }
-    if (userError) {
-      throw new BadRequestException(
-        `사용자의 승인 여부를 검사하는 중에 에러가 발생하였습니다.: ${userError.message}`,
-      );
-    }
-    const { data: reportData, error: reportError } = await this.supabase
+  constructor(
+    private readonly validateService: ValidateService,
+    private readonly adminService: AdminService,
+    private readonly userService: UserService,
+  ) {
+    this.supabase = createClient(
+      process.env.SUPABASE_URL,
+      process.env.SUPABASE_KEY,
+    );
+  }
+
+  /**
+   * 📌 Report 생성
+   */
+  async createReport(dto: CreateReportDto, walletAddress: string) {
+    const userId = await this.userService.getUserId(walletAddress);
+
+    const { data, error } = await this.supabase
       .from('report')
       .insert([
         {
           user_id: userId,
-          content: createReportDto.content,
-          staking_contract_address: createReportDto.stakingContractAddress,
-          admin_id: createReportDto.adminId,
-          status: 'No response',
-          validation_id: createReportDto.validationId,
+          validation_id: dto.validation_id,
+          reporter_comment: dto.reporter_comment,
+          status: 'pending',
+          created_at: new Date(),
         },
       ])
       .select()
       .single();
 
-    if (reportError) {
-      throw new BadRequestException(`리포트 등록 에러: ${reportError.message}`);
-    }
-    return reportData;
+    if (error) throw new Error(error.message);
+
+    return data;
   }
 
-  async updateReport(
-    updateReportDto: UpdateReportDto,
-    userId: string,
-    reportId: string,
-  ) {
-    const { data: adminData, error: adminError } = await this.supabase
-      .from('admin')
-      .select()
-      .eq('user_id', userId)
-      .single();
-    if (!adminData) {
-      throw new UnauthorizedException(`어드민이 아닙니다.`);
-    }
-    if (adminError) {
-      throw new BadRequestException(
-        `어드민 조회 중 에러가 발생하였습니다.: ${adminError.message}`,
-      );
-    }
-    const adminId = adminData.id;
-    const { data: reportAdminData, error: reportAdminError } =
-      await this.supabase
-        .from('report')
-        .select()
-        .eq('admin_id', adminId)
-        .eq('id', reportId)
-        .single();
-    if (!reportAdminData) {
-      throw new UnauthorizedException(`리포트 요청 받은 어드민이 아닙니다.`);
-    }
+  /**
+   * 📌 Report Response 생성
+   */
+  async createReportResponse(userId: string, dto: CreateReportResponseDto) {
+    const AdminId = userId;
+    const isAdmin = await this.adminService.isAdmin(userId);
 
-    if (reportAdminError) {
-      throw new BadRequestException(
-        `어드민 확인 중에 에러가 발생했습니다.: ${adminError.message}`,
-      );
-    }
-    console.log(updateReportDto.responseComment);
-    const { data: reportData, error: reportError } = await this.supabase
+    if (!isAdmin) throw new Error('Unauthorized');
+
+    const { data, error } = await this.supabase.from('report_response').insert([
+      {
+        report_id: dto.report_id,
+        admin_id: AdminId,
+        response_comment: dto.response_comment,
+        created_at: new Date(),
+      },
+    ]);
+
+    if (error) throw new Error(error.message);
+
+    return data;
+  }
+
+  /**
+   * 📌 Report 상태 업데이트
+   */
+  async updateReportToAccept(reportId: string) {
+    const { error } = await this.supabase
       .from('report')
-      .update({
-        status: 'approved',
-        response_comment: updateReportDto.responseComment,
-      })
-      .eq('id', reportId)
-      .select()
-      .single();
+      .update({ status: 'accept' })
+      .eq('id', reportId);
 
-    if (reportError) {
-      throw new BadRequestException(
-        `리포트 승인 중에 에러가 발생하였습니다.: ${reportError.message}`,
-      );
-    }
+    if (error) throw new Error(error.message);
+  }
 
-    const validationId = reportData.validation_id;
-    console.log(validationId);
-    const { data: validationData, error: validationError } = await this.supabase
-      .from('validation')
-      .update({
-        status: 'reported',
-      })
-      .eq('id', validationId)
-      .select()
-      .single();
-    if (validationError) {
-      throw new BadRequestException(
-        `검증 업데이트 중에 에러가 발생하였습니다.: ${validationError.message}`,
-      );
-    }
+  async updateReportToReject(reportId: string) {
+    const { error } = await this.supabase
+      .from('report')
+      .update({ status: 'reject' })
+      .eq('id', reportId);
 
-    const formattedData = {
-      ...reportData,
-      updatedvalidationData: { ...validationData },
-    };
-    return formattedData;
+    if (error) throw new Error(error.message);
   }
 }

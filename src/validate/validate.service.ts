@@ -239,7 +239,7 @@ export class ValidateService implements OnModuleInit {
     return valiData;
   }
 
-  // 검증 업데이트 (검증인이 테스크 완수 인정)
+  // 검증 업데이트 (검증인이 테스크 완수 인정, status를 validating으로 업데이트)
   async updateValidation(
     updateValidationDto: UpdateValidationDto,
     userId: string,
@@ -369,5 +369,26 @@ export class ValidateService implements OnModuleInit {
     }
 
     return randomValidator;
+  }
+  // 검증의 status를 reported로 변경경
+  async updateValidationToReported(validationId: string) {
+    const { error } = await this.supabase
+      .from('validation')
+      .update({ status: 'reported' })
+      .eq('id', validationId);
+
+    if (error) throw new Error(error.message);
+  }
+
+  // status가 reported인 validation 조회
+  async getReportedValidation() {
+    const { data, error } = await this.supabase
+      .from('validation')
+      .select('*')
+      .eq('status', 'reported');
+
+    if (error) throw new Error(error.message);
+
+    return data;
   }
 }

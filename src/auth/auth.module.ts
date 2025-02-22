@@ -12,7 +12,7 @@ import { WalletModule } from '../blockchain/blockchain.module';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET'),
+        secret: configService.get<string>('JWT_SECRET_KEY'),
         signOptions: { expiresIn: '24h' },
       }),
     }),

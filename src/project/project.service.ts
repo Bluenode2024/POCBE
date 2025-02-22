@@ -89,23 +89,16 @@ export class ProjectService {
   /**
    * 프로젝트 승인/거절
    */
-  async approveProject(dto: ApproveProjectDto, walletAddress: string) {
+  async approveProject(dto: ApproveProjectDto, req) {
     const supabase = this.supabaseService.getClient();
-    // 승인자의 ID 가져오기 (wallet_address 기준 검색)
-    const { data: applicant, error: userError } = await supabase
-      .from('user')
-      .select('id')
-      .eq('wallet_address', walletAddress) // 이메일 대신 wallet_address 사용
-      .single();
-
-    if (userError || !applicant) throw new Error('Applicant not found');
+    const userId = req.user.userId;
 
     // 1️⃣ 프로젝트 상태 업데이트
     const { data: project, error: projectError } = await supabase
       .from('project')
       .update({
         status: dto.approve_status,
-        approved_by: applicant.id,
+        approved_by: userId,
         admin_comment: dto.admin_comment,
         approved_at: new Date(),
       })

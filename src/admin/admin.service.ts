@@ -1,11 +1,12 @@
 import { Injectable, Inject, UnauthorizedException } from '@nestjs/common';
 import { SupabaseClient } from '@supabase/supabase-js';
-
+import { UserService } from '../user/user.service';
 @Injectable()
 export class AdminService {
   constructor(
     @Inject('SUPABASE_CLIENT')
     private readonly supabase: SupabaseClient,
+    private readonly userService: UserService,
   ) {}
 
   async grantAdminRole(userId: string, adminId: string) {
@@ -172,5 +173,17 @@ export class AdminService {
     });
 
     return result;
+  }
+
+  async isAdmin(userId: string): Promise<boolean> {
+    const { data, error } = await this.supabase
+      .from('admin')
+      .select('id')
+      .eq('user_id', userId)
+      .single();
+
+    if (error || !data) return false;
+
+    return true;
   }
 }

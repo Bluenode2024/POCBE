@@ -6,6 +6,7 @@ import {
   Post,
   Request,
   UseGuards,
+  Get,
 } from '@nestjs/common';
 import { AuthGuard } from 'src/auth/guards/auth.guard';
 import { ValidateService } from './validate.service';
@@ -45,5 +46,18 @@ export class ValidateController {
       userId,
       validationId,
     );
+  }
+
+  @Patch('reported/:id')
+  async updateValidationToReported(@Param('id') validationId: string) {
+    return this.validateService.updateValidationToReported(validationId);
+  }
+
+  /**
+   * ✅ Reported 상태인 Validation 가져오기
+   */
+  @Get('reported')
+  async getReportedValidation() {
+    return this.validateService.getReportedValidation();
   }
 }

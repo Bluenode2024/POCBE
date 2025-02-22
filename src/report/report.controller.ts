@@ -9,25 +9,61 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from 'src/auth/guards/auth.guard';
 import { ReportService } from './report.service';
-import { CreateReportDto, UpdateReportDto } from './report.dto';
+import { CreateReportDto, CreateReportResponseDto } from './dto/report.dto';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 
+@ApiTags('Report')
+@ApiBearerAuth() // ✅ Bearer 토큰 인증 추가
 @Controller('report')
 @UseGuards(AuthGuard)
 export class ReportController {
   constructor(private readonly reportService: ReportService) {}
+
   @Post()
-  async CreateReport(@Body() createReportDto: CreateReportDto, @Request() req) {
+  @ApiOperation({ summary: 'Report 생성' })
+  @ApiResponse({
+    status: 201,
+    description: 'Report가 성공적으로 생성되었습니다.',
+  })
+  async createReport(@Body() createReportDto: CreateReportDto, @Request() req) {
     const userId = req.user.userId;
     return this.reportService.createReport(createReportDto, userId);
   }
 
-  @Patch(':reportId')
-  async updateReport(
-    @Body() updateReportDto: UpdateReportDto,
+  /**
+   * ✅ Report 응답 생성
+   */
+  @Post('response')
+  @ApiOperation({ summary: 'Report 응답 생성' })
+  @ApiResponse({
+    status: 201,
+    description: 'Report 응답이 성공적으로 생성되었습니다.',
+  })
+  async createReportResponse(
+    @Body() createReportResponseDto: CreateReportResponseDto,
     @Request() req,
-    @Param('reportId') reportId,
   ) {
+    // ✅ isAdmin()과 GetUserId() 제거 -> req.user.userId 사용
     const userId = req.user.userId;
-    return this.reportService.updateReport(updateReportDto, userId, reportId);
+
+    return this.reportService.createReportResponse(
+      userId,
+      createReportResponseDto,
+    );
+  }
+
+  @Patch('success/:reportId')
+  async updateReportToAccept(@Param('reportId') reportId: string) {
+    return this.reportService.updateReportToAccept(reportId);
+  }
+
+  @Patch('reject/:reportId')
+  async updateReportToReject(@Param('reportId') reportId: string) {
+    return this.reportService.updateReportToReject(reportId);
   }
 }
