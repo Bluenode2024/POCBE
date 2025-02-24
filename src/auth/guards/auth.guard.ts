@@ -15,6 +15,7 @@ export class AuthGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
     const token = this.extractTokenFromHeader(request);
+    console.log('Request Headers:', request.headers);
     if (!token) {
       console.error('❌ 인증 토큰이 요청에 포함되지 않았습니다.');
       throw new UnauthorizedException('인증 토큰이 필요합니다.');
@@ -51,6 +52,6 @@ export class AuthGuard implements CanActivate {
     const [type, token] = authHeader.split(' ');
 
     // ✅ Bearer 타입만 허용
-    return type === 'Bearer' ? token : undefined;
+    return type.toLocaleLowerCase() === 'bearer' ? token : undefined;
   }
 }

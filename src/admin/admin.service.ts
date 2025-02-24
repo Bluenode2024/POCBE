@@ -61,6 +61,8 @@ export class AdminService {
   // }
 
   async approveUserRegistration(userId: string, adminId: string) {
+    console.log(userId);
+    console.log(adminId);
     const { data, error } = await this.supabase.rpc(
       'approve_user_registration',
       {

@@ -18,13 +18,13 @@ import {
 } from '@nestjs/swagger';
 
 @ApiTags('Report')
-@ApiBearerAuth() // ✅ Bearer 토큰 인증 추가
 @Controller('report')
-@UseGuards(AuthGuard)
 export class ReportController {
   constructor(private readonly reportService: ReportService) {}
 
   @Post()
+  @ApiBearerAuth('access-token')
+  @UseGuards(AuthGuard)
   @ApiOperation({ summary: 'Report 생성' })
   @ApiResponse({
     status: 201,
@@ -39,6 +39,8 @@ export class ReportController {
    * ✅ Report 응답 생성
    */
   @Post('response')
+  @ApiBearerAuth('access-token')
+  @UseGuards(AuthGuard)
   @ApiOperation({ summary: 'Report 응답 생성' })
   @ApiResponse({
     status: 201,

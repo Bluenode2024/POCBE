@@ -16,7 +16,15 @@ async function bootstrap() {
     .setTitle('PoC System API')
     .setDescription('Proof of Contribution 시스템 API 문서')
     .setVersion('1.0')
-    .addBearerAuth()
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        in: 'header',
+      },
+      'access-token',
+    )
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
@@ -26,7 +34,8 @@ async function bootstrap() {
   app.enableCors({
     origin: 'http://localhost:3000', // 허용할 클라이언트 도메인
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // 허용할 메서드
-    allowedHeaders: ['Content-Type', 'Authorization'], // 허용할 헤더
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin'], // 허용할 헤더
+    exposedHeaders: ['Authorization'],
     credentials: true, // 쿠키 허용 여부
   });
 

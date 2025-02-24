@@ -22,9 +22,7 @@ export class ReportService {
   /**
    * 📌 Report 생성
    */
-  async createReport(dto: CreateReportDto, walletAddress: string) {
-    const userId = await this.userService.getUserId(walletAddress);
-
+  async createReport(dto: CreateReportDto, userId: string) {
     const { data, error } = await this.supabase
       .from('report')
       .insert([
@@ -41,6 +39,19 @@ export class ReportService {
 
     if (error) throw new Error(error.message);
 
+    const { data: validation, error: validationError } = await this.supabase
+      .from('validation')
+      .update([
+        {
+          status: 'reported',
+        },
+      ])
+      .eq('id', dto.validation_id)
+      .select()
+      .single();
+
+    if (validationError) throw new Error(validationError.message);
+
     return data;
   }
 
@@ -48,21 +59,59 @@ export class ReportService {
    * 📌 Report Response 생성
    */
   async createReportResponse(userId: string, dto: CreateReportResponseDto) {
-    const AdminId = userId;
     const isAdmin = await this.adminService.isAdmin(userId);
 
     if (!isAdmin) throw new Error('Unauthorized');
 
+    const { data: AdminId, error: AdminIdError } = await this.supabase
+      .from('admin')
+      .select('id')
+      .eq('user_id', userId)
+      .single();
+
+    if (AdminIdError) throw new Error(AdminIdError.message);
+
     const { data, error } = await this.supabase.from('report_response').insert([
       {
         report_id: dto.report_id,
-        admin_id: AdminId,
+        admin_id: AdminId.id,
         response_comment: dto.response_comment,
         created_at: new Date(),
       },
     ]);
 
     if (error) throw new Error(error.message);
+
+    const { error: reportError } = await this.supabase
+      .from('report')
+      .update({ status: dto.status })
+      .eq('id', dto.report_id);
+
+    if (reportError) throw new Error(reportError.message);
+
+    // ✅ dto.status가 'rejected'일 경우 validation status 업데이트
+    if (dto.status === 'rejected') {
+      const { data: validation, error: validationError } = await this.supabase
+        .from('report')
+        .select('validation_id')
+        .eq('id', dto.report_id)
+        .single();
+
+      if (validationError) {
+        throw new Error(validationError.message);
+      }
+
+      const { error: validationupdateError } = await this.supabase
+        .from('validation')
+        .update({ status: 'success' }) // ✅ validation status를 success로 업데이트
+        .eq('id', validation.validation_id); // ✅ 해당 report_id에 맞는 validation 업데이트
+
+      if (validationupdateError) {
+        throw new Error(
+          `Validation update failed: ${validationupdateError.message}`,
+        );
+      }
+    }
 
     return data;
   }

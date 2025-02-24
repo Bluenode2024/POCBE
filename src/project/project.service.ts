@@ -1,9 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { SupabaseService } from '../supabase.service';
-import { CreateProjectDto } from './dto/create-project.dto';
-import { ApproveProjectDto } from './dto/approve-project.dto';
-import { UpdateRepositoryDto } from './dto/update-repository.dto';
-
+import {
+  CreateProjectDto,
+  ApproveProjectDto,
+  UpdateRepositoryDto,
+} from './dto/project.dto';
 @Injectable()
 export class ProjectService {
   constructor(private readonly supabaseService: SupabaseService) {}
@@ -11,17 +12,8 @@ export class ProjectService {
   /**
    * 프로젝트 생성 (리더가 신청)
    */
-  async createProject(dto: CreateProjectDto, walletAddress: string) {
+  async createProject(dto: CreateProjectDto, leaderId: string) {
     const supabase = this.supabaseService.getClient();
-
-    // 1️⃣ 신청자의 ID 가져오기 (wallet_address 기준 검색)
-    const { data: applicant, error: userError } = await supabase
-      .from('user')
-      .select('id')
-      .eq('wallet_address', walletAddress) // 이메일 대신 wallet_address 사용
-      .single();
-
-    if (userError || !applicant) throw new Error('Applicant not found');
 
     // 2️⃣ 프로젝트 추가 (leader_id를 신청자의 ID로 설정)
     const { data: project, error: projectError } = await supabase
@@ -30,7 +22,7 @@ export class ProjectService {
         {
           project_name: dto.project_name,
           description: dto.description,
-          leader_id: applicant.id,
+          leader_id: leaderId,
           start_date: dto.start_date,
           end_date: dto.end_date,
           approve_status: false,
@@ -46,7 +38,7 @@ export class ProjectService {
     await supabase.from('project_member').insert([
       {
         project_id: project.id,
-        members_id: applicant.id,
+        members_id: leaderId,
         role: 'leader',
       },
     ]);
@@ -69,7 +61,7 @@ export class ProjectService {
         {
           project_id: project.id,
           members_id: user.id, // ✅ 조회한 ID를 저장
-          role: 'member',
+          role: member.role,
         },
       ]);
     }
@@ -93,12 +85,23 @@ export class ProjectService {
     const supabase = this.supabaseService.getClient();
     const userId = req.user.userId;
 
-    // 1️⃣ 프로젝트 상태 업데이트
+    // 1️⃣ 어드민 권한 확인
+    const { data: isAdmin, error: isAdminError } = await supabase
+      .from('admin')
+      .select('id')
+      .eq('user_id', userId)
+      .single();
+
+    if (isAdminError || !isAdmin) {
+      throw new UnauthorizedException('관리자 권한이 없습니다.');
+    }
+
+    //  프로젝트 상태 업데이트
     const { data: project, error: projectError } = await supabase
       .from('project')
       .update({
-        status: dto.approve_status,
-        approved_by: userId,
+        approve_status: dto.approve_status,
+        approved_by: isAdmin.id,
         admin_comment: dto.admin_comment,
         approved_at: new Date(),
       })
@@ -114,28 +117,28 @@ export class ProjectService {
       .select('repo_link')
       .eq('project_id', dto.project_id);
 
-    if (repositories.length > 0) {
-      // ✅ 4️⃣ 레포지토리가 존재하면 웹훅 호출
-      const webhookUrl = 'http://localhost:4000/webhook'; // 기여도 평가 프로그램의 웹훅 URL
+    // if (repositories.length > 0) {
+    //   // ✅ 4️⃣ 레포지토리가 존재하면 웹훅 호출
+    //   const webhookUrl = 'http://localhost:4000/webhook'; // 기여도 평가 프로그램의 웹훅 URL
 
-      const response = await fetch(webhookUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer TEST_SECRET_KEY`, // 보안 강화를 위한 API Key
-        },
-        body: JSON.stringify({
-          project_name: project.project_name,
-          repositories: repositories.map((repo) => repo.repo_link),
-        }),
-      });
+    //   const response = await fetch(webhookUrl, {
+    //     method: 'POST',
+    //     headers: {
+    //       'Content-Type': 'application/json',
+    //       Authorization: `Bearer TEST_SECRET_KEY`, // 보안 강화를 위한 API Key
+    //     },
+    //     body: JSON.stringify({
+    //       project_name: project.project_name,
+    //       repositories: repositories.map((repo) => repo.repo_link),
+    //     }),
+    //   });
 
-      if (!response.ok) {
-        console.error('❌ Webhook failed:', await response.text());
-      } else {
-        console.log('✅ Webhook sent successfully!');
-      }
-    }
+    //   if (!response.ok) {
+    //     console.error('❌ Webhook failed:', await response.text());
+    //   } else {
+    //     console.log('✅ Webhook sent successfully!');
+    //   }
+    // }
 
     return project;
   }

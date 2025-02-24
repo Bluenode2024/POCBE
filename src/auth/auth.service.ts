@@ -81,6 +81,7 @@ export class AuthService {
       const token = await this.jwtService.signAsync(payload, {
         secret: secret,
       });
+      console.log('✅ 인증 성공, payload: ', payload);
       return {
         access_token: token,
         user: {

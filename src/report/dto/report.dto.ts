@@ -25,16 +25,23 @@ export class CreateReportDto {
 export class CreateReportResponseDto {
   @ApiProperty({
     description: '리포트 아이디',
-    example: '검토 후 승인되었습니다.',
+    example: '123e4567-e89b-12d3-a456-426614174000',
   })
   @IsUUID()
   @IsNotEmpty()
   report_id: string;
 
   @ApiProperty({
-    description: '응답 코멘트',
-    example: '123e4567-e89b-12d3-a456-426614174000',
+    description: '어드민 커맨트',
+    example: '검토 후 승인되었습니다.',
   })
   @IsString()
   response_comment: string;
+
+  @ApiProperty({
+    description: '승인 여부',
+    example: 'approve',
+  })
+  @IsString()
+  status: string;
 }
