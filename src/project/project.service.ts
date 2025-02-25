@@ -111,34 +111,67 @@ export class ProjectService {
 
     if (projectError) throw new Error(projectError.message);
 
+    console.log(project, "project");
+
     // 3️⃣ 해당 프로젝트의 레포지토리 링크 가져오기
     const { data: repositories } = await supabase
       .from('repository')
       .select('repo_link')
       .eq('project_id', dto.project_id);
 
-    // if (repositories.length > 0) {
-    //   // ✅ 4️⃣ 레포지토리가 존재하면 웹훅 호출
-    //   const webhookUrl = 'http://localhost:4000/webhook'; // 기여도 평가 프로그램의 웹훅 URL
+    console.log(repositories, "repositories"); 
 
-    //   const response = await fetch(webhookUrl, {
-    //     method: 'POST',
-    //     headers: {
-    //       'Content-Type': 'application/json',
-    //       Authorization: `Bearer TEST_SECRET_KEY`, // 보안 강화를 위한 API Key
-    //     },
-    //     body: JSON.stringify({
-    //       project_name: project.project_name,
-    //       repositories: repositories.map((repo) => repo.repo_link),
-    //     }),
-    //   });
+    if (repositories && repositories.length > 0) {
+      const webhookUrl = 'http://localhost:10000/api/repository';
+      
+      for (const repo of repositories) {
+        try {
+          // GitHub URL에서 저장소 이름 추출 (특수문자 제거)
+          const repoName = repo.repo_link
+            .split('/')
+            .pop()
+            .toLowerCase()
+            .replace(/[^a-z0-9]/g, '');  // 특수문자 완전 제거
+          
+          const webhookData = {
+            
+              [repoName]: {
+                meta: {
+                  title: repoName  
+                },
+                git: [
+                  repo.repo_link.trim()
+                ]
+              }
+            }
+          
 
-    //   if (!response.ok) {
-    //     console.error('❌ Webhook failed:', await response.text());
-    //   } else {
-    //     console.log('✅ Webhook sent successfully!');
-    //   }
-    // }
+          console.log(`📤 Processing repository: ${repo.repo_link}`);
+          console.log('⏳ Sending webhook request with data:', JSON.stringify(webhookData, null, 2));
+
+          const response = await fetch(webhookUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(webhookData)
+          });
+
+          const responseData = await response.json();
+
+          if (!response.ok) {
+            console.error(`❌ Webhook failed for ${repo.repo_link}:`, responseData);
+          } else {
+            console.log(`✅ Webhook successful for ${repo.repo_link}:`, responseData);
+          }
+
+          await new Promise(resolve => setTimeout(resolve, 2000));
+
+        } catch (error) {
+          console.error(`❌ Error processing ${repo.repo_link}:`, error);
+        }
+      }
+    }
 
     return project;
   }
