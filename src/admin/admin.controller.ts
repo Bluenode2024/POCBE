@@ -6,7 +6,6 @@ import {
   Get,
   UseGuards,
   Request,
-  Req,
 } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { AuthGuard } from 'src/auth/guards/auth.guard';
@@ -23,23 +22,6 @@ export class AdminController {
     return this.adminService.grantAdminRole(userId, adminId);
   }
 
-  // @Post('grant-role')
-  // async grantAdminRole(
-  //   @Body()
-  //   data: {
-  //     granterId: string;
-  //     newAdminId: string;
-  //     walletAddress: string;
-  //     isInitialAdmin?: boolean;
-  //   },
-  // ) {
-  //   return this.adminService.grantAdminRole(
-  //     data.granterId,
-  //     data.newAdminId,
-  //     data.walletAddress,
-  //     data.isInitialAdmin,
-  //   );
-  // }
   @ApiBearerAuth('access-token')
   @Post('approve-user/:userId')
   async approveUser(@Param('userId') userId: string, @Request() req) {
@@ -60,9 +42,4 @@ export class AdminController {
   async approveUserRequest() {
     return this.adminService.approveUserList();
   }
-
-  // @Get('report')
-  // async getReportList() {
-  //   return this.adminService.reportList();
-  // }
 }

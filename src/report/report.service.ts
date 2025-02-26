@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { ValidateService } from '../validate/validate.service';
 import { AdminService } from '../admin/admin.service';
@@ -37,9 +37,12 @@ export class ReportService {
       .select()
       .single();
 
-    if (error) throw new Error(error.message);
+    if (error)
+      throw new BadRequestException(
+        `리포트 생성 중에 에러가 발생하였습니다: ${error.message}`,
+      );
 
-    const { data: validation, error: validationError } = await this.supabase
+    const { error: validationError } = await this.supabase
       .from('validation')
       .update([
         {
@@ -50,7 +53,10 @@ export class ReportService {
       .select()
       .single();
 
-    if (validationError) throw new Error(validationError.message);
+    if (validationError)
+      throw new BadRequestException(
+        `검증 업데이트 중에 에러가 발생하였습니다: ${validationError.message}`,
+      );
 
     return data;
   }
@@ -125,7 +131,12 @@ export class ReportService {
       .update({ status: 'accept' })
       .eq('id', reportId);
 
-    if (error) throw new Error(error.message);
+    if (error)
+      throw new BadRequestException(
+        `리포트 승인 중에 에러가 발생하였습니다: ${error.message}`,
+      );
+
+    return { message: '리포트를 성공적으로 승인하였습니다.' };
   }
 
   async updateReportToReject(reportId: string) {
@@ -134,6 +145,11 @@ export class ReportService {
       .update({ status: 'reject' })
       .eq('id', reportId);
 
-    if (error) throw new Error(error.message);
+    if (error)
+      throw new BadRequestException(
+        `리포트 반려 중에 에러가 발생하였습니다: ${error.message}`,
+      );
+
+    return { message: '리포트를 성공적으로 반려하였습니다.' };
   }
 }
