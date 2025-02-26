@@ -1,11 +1,14 @@
 import { Module } from '@nestjs/common';
-import { WalletService } from './blockchain.service';
+import { BlockchainService } from './blockchain.service';
 import { ethers } from 'ethers';
 import { ConfigService } from '@nestjs/config';
+import { BlockchainController } from './blockchain.controller';
+import { IPFSModule } from '../ipfs/ipfs.module';
 
 @Module({
+  imports: [IPFSModule],
   providers: [
-    WalletService,
+    BlockchainService,
     {
       provide: 'ETHEREUM_PROVIDER',
       useFactory: (configService: ConfigService) => {
@@ -16,6 +19,7 @@ import { ConfigService } from '@nestjs/config';
       inject: [ConfigService],
     },
   ],
-  exports: [WalletService],
+  controllers: [BlockchainController],
+  exports: [BlockchainService],
 })
-export class WalletModule {}
+export class BlockchainModule {}

@@ -1,7 +1,7 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { IPFSService } from '../ipfs/ipfs.service';
-import { WalletService } from '../blockchain/blockchain.service';
+import { BlockchainService } from '../blockchain/blockchain.service';
 import { CreatePocActivityDto } from './dto/create-poc-activity.dto';
 
 @Injectable()
@@ -10,7 +10,7 @@ export class ActivityService {
     @Inject('SUPABASE_CLIENT')
     private readonly supabase: SupabaseClient,
     private ipfsService: IPFSService,
-    private walletService: WalletService,
+    private blockchainService: BlockchainService,
   ) {}
 
   async submitActivityProof(
@@ -22,10 +22,14 @@ export class ActivityService {
   ) {
     // IPFS에 증거 업로드
     const ipfsHash = await this.ipfsService.uploadJson(proofData);
+    const message = `Submit proof: ${ipfsHash}`;
+
+    console.log('ipfsHash:', ipfsHash);  // 실제 검증에 사용되는 메시지 출력
+    console.log('message:', message);
 
     // 서명 검증
-    const isValid = await this.walletService.verifySignature(
-      `Submit proof: ${ipfsHash}`,
+    const isValid = await this.blockchainService.verifySignature(
+      message,
       signature,
       walletAddress,
     );
@@ -39,7 +43,7 @@ export class ActivityService {
       p_user_id: userId,
       p_activity_type_id: activityTypeId,
       p_ipfs_hash: ipfsHash,
-      p_proof_message: proofData.message,
+      p_proof_message: message,
     });
   }
 
@@ -50,7 +54,7 @@ export class ActivityService {
     adminSignature: string,
   ) {
     // 서명 검증
-    const isValid = await this.walletService.verifySignature(
+    const isValid = await this.blockchainService.verifySignature(
       `Approve proof: ${proofId}`,
       adminSignature,
       adminWalletAddress,
