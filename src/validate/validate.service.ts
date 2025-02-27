@@ -6,7 +6,6 @@ import {
   Logger,
   OnModuleInit,
   NotFoundException,
-  InternalServerErrorException,
 } from '@nestjs/common';
 import { SupabaseClient } from '@supabase/supabase-js';
 import {
@@ -82,7 +81,7 @@ export class ValidateService implements OnModuleInit {
 
     if (validationError) {
       this.logger.error(
-        `검증 상태를 변경하던 중에 에러가 발생하였습니다.: ${validationError.message}`,
+        `검증 상태를 변경하던 중에 에러가 발생하였습니다: ${validationError.message}`,
       );
     }
   }
@@ -97,8 +96,8 @@ export class ValidateService implements OnModuleInit {
         .single();
 
     if (contractAddressOwnerError) {
-      throw new InternalServerErrorException(
-        `검증인 조회 중 에러가 발생하였습니다.: ${contractAddressOwnerError.message}`,
+      throw new BadRequestException(
+        `컨트랙트 주소 소유자 조회 중에 에러가 발생하였습니다: ${contractAddressOwnerError.message}`,
       );
     }
 
@@ -115,8 +114,8 @@ export class ValidateService implements OnModuleInit {
       .single();
 
     if (validatorError)
-      throw new InternalServerErrorException(
-        `검증인 조회 중 에러가 발생하였습니다.: ${validatorError.message}`,
+      throw new BadRequestException(
+        `검증인 조회 중에 에러가 발생하였습니다: ${validatorError.message}`,
       );
 
     return validatorData;
@@ -132,7 +131,7 @@ export class ValidateService implements OnModuleInit {
     // 유효한 검증인 조회
     const validValidator = await this.findValidValidator(projectMembers);
 
-    // pending인 검증 조회
+    // 검증 생성
     const { data: validationData, error: validationError } = await this.supabase
       .from('validation')
       .insert([
@@ -146,7 +145,9 @@ export class ValidateService implements OnModuleInit {
       .single();
 
     if (validationError) {
-      throw new Error(`검증 에러: ${validationError.message}`);
+      throw new BadRequestException(
+        `검증 생성 중에 에러가 발생하였습니다: ${validationError.message}`,
+      );
     }
 
     // 검증 생성과 동시에 타이머 설정 (시작)
@@ -197,7 +198,7 @@ export class ValidateService implements OnModuleInit {
 
     if (validationError) {
       this.logger.error(
-        `검증 조회 중 에러가 발생하였습니다.: ${validationError.message}`,
+        `검증 조회 중에 에러가 발생하였습니다: ${validationError.message}`,
       );
     }
     const validator = validationData.vali_id; // 리포트 기간이 지난 검증의 검증인
@@ -253,7 +254,7 @@ export class ValidateService implements OnModuleInit {
       .single();
     if (validationError) {
       throw new BadRequestException(
-        `검증 조회 중에 에러가 발생하였습니다.: ${validationError.message}`,
+        `검증 조회 중에 에러가 발생하였습니다: ${validationError.message}`,
       );
     }
     const validatorId = validationData.vali_id;
@@ -272,7 +273,7 @@ export class ValidateService implements OnModuleInit {
     }
     if (checkValidatorError) {
       throw new BadRequestException(
-        `검증인 확인 중에 에러가 발생하였습니다.: ${checkValidatorError.message}`,
+        `검증인 확인 중에 에러가 발생하였습니다: ${checkValidatorError.message}`,
       );
     }
 
@@ -292,7 +293,7 @@ export class ValidateService implements OnModuleInit {
 
     if (updateValidationError) {
       throw new BadRequestException(
-        `검증 완수 업데이트 중에 에러가 발생하였습니다.: ${updateValidationError.message}`,
+        `검증 완수 업데이트 중에 에러가 발생하였습니다: ${updateValidationError.message}`,
       );
     }
 
@@ -312,7 +313,7 @@ export class ValidateService implements OnModuleInit {
       .single();
     if (projectError) {
       throw new BadRequestException(
-        `프로젝트 ID 조회 에러: ${projectError.message}`,
+        `프로젝트 ID 조회 중에 에러가 발생하였습니다: ${projectError.message}`,
       );
     }
     const projectId = projectData.project_id;
@@ -347,7 +348,7 @@ export class ValidateService implements OnModuleInit {
       .select();
     if (validatorError) {
       throw new BadRequestException(
-        `검증인 불러오기 에러: ${validatorError.message}`,
+        `검증인을 불러오는 중에 에러가 발생하였습니다: ${validatorError.message}`,
       );
     }
     const validatorIds = validatorData.map((valid) => valid.id);
@@ -370,14 +371,18 @@ export class ValidateService implements OnModuleInit {
 
     return randomValidator;
   }
-  // 검증의 status를 reported로 변경경
+  // 검증의 status를 reported로 변경
   async updateValidationToReported(validationId: string) {
     const { error } = await this.supabase
       .from('validation')
       .update({ status: 'reported' })
       .eq('id', validationId);
 
-    if (error) throw new Error(error.message);
+    if (error)
+      throw new BadRequestException(
+        `검증 완수 업데이트 중에 에러가 발생하였습니다: ${error.message}`,
+      );
+    return { message: '검증 상태를 성공적으로 reported로 업데이트하였습니다.' };
   }
 
   // status가 reported인 validation 조회
