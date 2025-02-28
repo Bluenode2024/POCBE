@@ -7,14 +7,14 @@ import {
 } from '@nestjs/common';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { CreateEpochDto } from './dto/create-epoch.dto';
-import { WalletService } from '../blockchain/blockchain.service';
+import { BlockchainService } from '../blockchain/blockchain.service';
 
 @Injectable()
 export class EpochService {
   constructor(
     @Inject('SUPABASE_CLIENT')
     private readonly supabase: SupabaseClient,
-    private readonly walletService: WalletService,
+    private readonly blockchainService: BlockchainService,
   ) {}
 
   async createEpoch(createEpochDto: CreateEpochDto, userId: string) {

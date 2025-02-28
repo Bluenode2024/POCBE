@@ -11,7 +11,7 @@ import { ActivityModule } from './activity/activity.module';
 import { ProjectModule } from './project/project.module';
 import { EpochModule } from './epoch/epoch.module';
 import { IPFSModule } from './ipfs/ipfs.module';
-import { WalletModule } from './blockchain/blockchain.module';
+import { BlockchainModule } from './blockchain/blockchain.module';
 import { UserModule } from './user/user.module';
 import { PocModule } from './poc/poc.module';
 import { ScoreModule } from './score/score.module';
@@ -37,7 +37,7 @@ import { ClaimModule } from './claim/claim.module';
     ProjectModule,
     EpochModule,
     IPFSModule,
-    WalletModule,
+    BlockchainModule,
     UserModule,
     PocModule,
     ScoreModule,

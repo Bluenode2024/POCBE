@@ -2,29 +2,23 @@ import { Controller, Post, Body, UseGuards } from '@nestjs/common';
 import { ActivityService } from './activity.service';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { CreatePocActivityDto } from './dto/create-poc-activity.dto';
+import { SubmitProofDto } from './dto/submit-proof.dto';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
-@Controller('activity')
+@ApiBearerAuth('access-token')
 @UseGuards(AuthGuard)
+@Controller('activity')
 export class ActivityController {
   constructor(private readonly activityService: ActivityService) {}
 
   @Post('submit-proof')
-  async submitProof(
-    @Body()
-    data: {
-      userId: string;
-      activityTypeId: string;
-      proofData: any;
-      signature: string;
-      walletAddress: string;
-    },
-  ) {
+  async submitProof(@Body() submitProofDto: SubmitProofDto) {
     return this.activityService.submitActivityProof(
-      data.userId,
-      data.activityTypeId,
-      data.proofData,
-      data.signature,
-      data.walletAddress,
+      submitProofDto.userId,
+      submitProofDto.activityTypeId,
+      submitProofDto.proofData,
+      submitProofDto.signature,
+      submitProofDto.walletAddress,
     );
   }
 
