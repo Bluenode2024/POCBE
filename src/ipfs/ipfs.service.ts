@@ -1,7 +1,7 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios, { AxiosInstance } from 'axios';
-import FormData from 'form-data';
+import * as FormData from 'form-data';
 
 @Injectable()
 export class IPFSService implements OnModuleInit {
@@ -66,7 +66,10 @@ export class IPFSService implements OnModuleInit {
   async uploadFile(file: Buffer, filename: string): Promise<string> {
     try {
       const formData = new FormData();
-      formData.append('file', file, filename);
+      formData.append('file', file, {
+        filename: filename,
+        contentType: 'application/octet-stream', // 바이너리 파일 기본 설정
+      });
 
       const response = await this.pinataApi.post(
         '/pinning/pinFileToIPFS',

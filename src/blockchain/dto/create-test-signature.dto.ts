@@ -1,39 +1,30 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsObject, IsNotEmpty, ValidateNested } from 'class-validator';
+import {
+  IsObject,
+  IsNotEmpty,
+  ValidateNested,
+  IsString,
+  IsOptional,
+} from 'class-validator';
 import { Type } from 'class-transformer';
-
-// 내부 ProofData 타입을 위한 DTO
-export class ProofDataDto {
-  @ApiProperty({
-    description: '증명 타입',
-    example: 'session_attendance'
-  })
-  @IsNotEmpty()
-  type: string;
-
-  @ApiProperty({
-    description: '날짜',
-    example: '2024-03-15'
-  })
-  @IsNotEmpty()
-  date: string;
-
-  @ApiProperty({
-    description: '상세 내용',
-    example: '블록체인 세션 참석'
-  })
-  @IsNotEmpty()
-  details: string;
-}
+import { Express } from 'express';
 
 export class CreateTestSignatureDto {
   @ApiProperty({
-    description: '증명 데이터',
-    type: ProofDataDto
+    description: '증명 데이터 (JSON 문자열 형태)',
+    example:
+      '{"type":"session_attendance","date":"2025-03-15","details":"블록체인 세션 참석"}',
+    type: 'string',
   })
-  @IsNotEmpty()
-  @IsObject()
-  @ValidateNested()
-  @Type(() => ProofDataDto)
-  proofData: ProofDataDto;
+  @IsString()
+  proofData: string; // 문자열로 받아서 JSON.parse()로 변환 예정
+
+  @ApiProperty({
+    description: '첨부 파일(이미지, pdf, word, txt 등)',
+    type: 'string',
+    format: 'binary', // Swagger에서 파일 업로드 가능하게 설정
+    required: false,
+  })
+  @IsOptional()
+  file?: Express.Multer.File;
 }

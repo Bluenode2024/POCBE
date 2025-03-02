@@ -3,6 +3,7 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { IPFSService } from '../ipfs/ipfs.service';
 import { BlockchainService } from '../blockchain/blockchain.service';
 import { CreatePocActivityDto } from './dto/create-poc-activity.dto';
+import { Express } from 'express';
 
 @Injectable()
 export class ActivityService {
@@ -13,21 +14,53 @@ export class ActivityService {
     private blockchainService: BlockchainService,
   ) {}
 
+  async generateProofHash(proofData: string, file?: Express.Multer.File) {
+    // 1️⃣ proofData를 JSON으로 변환
+    // JSON 파싱 예외 처리
+    let parsedProofData;
+    try {
+      parsedProofData = JSON.parse(proofData);
+    } catch (error) {
+      throw new Error('Invalid JSON format for proofData.');
+    }
+
+    // 2️⃣ JSON 데이터를 IPFS에 업로드
+    const jsonIpfsHash = await this.ipfsService.uploadJson(parsedProofData);
+
+    // 3️⃣ 파일이 있다면 IPFS에 업로드
+    let fileIpfsHash = null;
+    if (file) {
+      fileIpfsHash = await this.ipfsService.uploadFile(
+        file.buffer,
+        file.originalname,
+      );
+    }
+
+    return {
+      jsonIpfsHash,
+      fileIpfsHash,
+      message: `Submit proof: ${jsonIpfsHash} ${fileIpfsHash ?? ''}`,
+    };
+  }
+
   async submitActivityProof(
     userId: string,
+
     activityTypeId: string,
-    proofData: any,
+    jsonIpfsHash: string,
+    fileIpfsHash: string | null,
     signature: string,
     walletAddress: string,
   ) {
-    // IPFS에 증거 업로드
-    const ipfsHash = await this.ipfsService.uploadJson(proofData);
-    const message = `Submit proof: ${ipfsHash}`;
+    const jsonIpfsUrl = `https://gateway.pinata.cloud/ipfs/${jsonIpfsHash}`;
+    const fileIpfsUrl = fileIpfsHash
+      ? `https://gateway.pinata.cloud/ipfs/${fileIpfsHash}`
+      : null;
+    const message = `${jsonIpfsHash} ${fileIpfsHash ?? ''}`;
 
-    console.log('ipfsHash:', ipfsHash);  // 실제 검증에 사용되는 메시지 출력
     console.log('message:', message);
 
-    // 서명 검증
+    // 2️⃣ 서명 검증
     const isValid = await this.blockchainService.verifySignature(
       message,
       signature,
@@ -35,15 +68,18 @@ export class ActivityService {
     );
 
     if (!isValid) {
-      throw new Error('Invalid signature');
+      throw new Error('Invalid signature'); // ❌ 서명이 올바르지 않다면 에러 반환
     }
 
-    // 증명 제출
+    // 3️⃣ 증명 제출
     return this.supabase.rpc('submit_activity_proof', {
       p_user_id: userId,
       p_activity_type_id: activityTypeId,
-      p_ipfs_hash: ipfsHash,
+      p_ipfs_hash: jsonIpfsUrl,
+      p_file_ipfs_hash: fileIpfsUrl,
       p_proof_message: message,
+      p_signature: signature,
+      p_wallet_address: walletAddress,
     });
   }
 

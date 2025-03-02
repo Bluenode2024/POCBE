@@ -4,7 +4,6 @@ import { CreateTestSignatureDto } from './dto/create-test-signature.dto';
 
 @Injectable()
 export class BlockchainService {
-  
   constructor(
     @Inject('ETHEREUM_PROVIDER')
     private provider: ethers.Provider,
@@ -18,10 +17,10 @@ export class BlockchainService {
     // 테스트용 지갑 생성 (실제 환경에서는 절대 사용하지 마세요!)
     const testWallet = ethers.Wallet.createRandom();
     const signature = await testWallet.signMessage(message);
-    
+
     return {
       signature,
-      address: await testWallet.getAddress()
+      address: await testWallet.getAddress(),
     };
   }
 
