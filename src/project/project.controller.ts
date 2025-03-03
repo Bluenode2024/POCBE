@@ -93,4 +93,21 @@ export class ProjectController {
   async getProjectsByStatus(@Param('status') status: string) {
     return this.projectService.getProjectsByStatus(status);
   }
+
+  /**
+   * ✅ 사용자가 현재 참여중인 모든 프로젝트 조회
+   */
+  @Get('myproject')
+  @ApiBearerAuth('access-token')
+  @UseGuards(AuthGuard) // JWT 인증 미들웨어 적용
+  @ApiOperation({
+    summary: '사용자가 현재 참여중인 모든 프로젝트 목록 조회 ',
+    description: '사용자 본인이 현재 참여중인 프로젝트 목록을 조회합니다.',
+  })
+  @ApiResponse({ status: 200, description: '프로젝트 조회 성공' })
+  @ApiResponse({ status: 404, description: '프로젝트가 존재하지 않음' })
+  async getMyProjects(@Req() req) {
+    const userId = req.user.userId;
+    return this.projectService.getMyProjects(userId);
+  }
 }
