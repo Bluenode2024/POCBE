@@ -179,6 +179,22 @@ export class ProjectService {
 
     return project;
   }
+  async getTasksByProjectId(projectId: string) {
+    const supabase = this.supabaseService.getClient();
+    const { data: task, error: taskError } = await supabase
+      .from('task')
+      .select(
+        `id,
+      poc:poc (entity, category, score, description)`,
+      )
+      .eq('project_id', projectId);
+
+    if (taskError) {
+      throw new Error(taskError.message);
+    }
+
+    return task;
+  }
 
   /**
    * 승인된 프로젝트에 GitHub 링크 추가

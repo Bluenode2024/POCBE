@@ -6,6 +6,20 @@ export class UserService {
     @Inject('SUPABASE_CLIENT')
     private readonly supabase: SupabaseClient,
   ) {}
+
+  async getAllUsers() {
+    const { data: allUser, error: allUserError } = await this.supabase
+      .from('user')
+      .select('*');
+
+    console.log(allUser);
+    if (!allUser) throw new UnauthorizedException(`유저가 존재하지 않습니다.`);
+    else if (allUserError)
+      throw new UnauthorizedException(`유저를 찾는데 실패하였습니다.`);
+
+    return allUser;
+  }
+
   async userStatusUpdate(memberId: string, userId: string) {
     const { data: findAdmin, error: findAdminError } = await this.supabase
       .from('admin')

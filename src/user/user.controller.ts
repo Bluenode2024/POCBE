@@ -8,12 +8,23 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from 'src/auth/guards/auth.guard';
 import { UserService } from './user.service';
-import { ApiBearerAuth } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 
 @Controller('users')
 @UseGuards(AuthGuard)
 export class UserController {
   constructor(private readonly userService: UserService) {}
+
+  @ApiBearerAuth('access-token')
+  @ApiOperation({
+    summary: '모든 유저 목록 조회 ',
+    description: '등록된 유저의 목록을 조회합니다.',
+  })
+  @Get()
+  async getAllUsers() {
+    return this.userService.getAllUsers();
+  }
+
   @Patch(':userId')
   async updateUserStatus(@Param('userId') memberId: string, @Request() req) {
     const userId = req.user.userId;

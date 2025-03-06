@@ -80,6 +80,15 @@ export class ProjectController {
     return this.projectService.insertRepository(updateRepositoryDto);
   }
 
+  @Get(':id/tasks')
+  @ApiBearerAuth('access-token')
+  @ApiOperation({
+    summary: '프로젝트의 테스크 조회',
+    description: '주어진 프로젝트id의 테스크를 조회합니다.',
+  })
+  async getTasksByProjectId(@Param('id') projectId: string) {
+    return this.projectService.getTasksByProjectId(projectId);
+  }
   /**
    * ✅ 특정 상태의 프로젝트 조회
    */
