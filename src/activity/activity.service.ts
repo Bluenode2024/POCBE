@@ -44,6 +44,7 @@ export class ActivityService {
   }
 
   async submitActivityProof(
+    taskId: string,
     userId: string,
 
     activityTypeId: string,
@@ -73,6 +74,7 @@ export class ActivityService {
 
     // 3️⃣ 증명 제출
     return this.supabase.rpc('submit_activity_proof', {
+      p_task_id: taskId,
       p_user_id: userId,
       p_activity_type_id: activityTypeId,
       p_ipfs_hash: jsonIpfsUrl,

@@ -195,6 +195,100 @@ export class ProjectService {
 
     return task;
   }
+  async getTaskById(taskId: string) {
+    const supabase = this.supabaseService.getClient();
+    const { data: Task, error: TaskError } = await supabase
+      .from('task')
+      .select(
+        `id,
+      poc:poc (entity, category, score, description, epoch_id, signature),
+      project:project!inner (id, project_name, description, status)`,
+      )
+      .eq('id', taskId);
+
+    if (TaskError) {
+      throw new Error(TaskError.message);
+    }
+    console.log('task:', Task);
+    return Task;
+  }
+  async getMyTask(userId: string) {
+    const supabase = this.supabaseService.getClient();
+    const { data: myTask, error: myTaskError } = await supabase
+      .from('task')
+      .select(
+        `
+      task: id,
+      poc:poc (entity, category, score, description),
+      project:project!inner (id, project_name, description, status)
+    `,
+      )
+      .eq('user_id', userId);
+
+    if (!myTask || myTask.length === 0) {
+      console.log('할당된 테스크가 존재하지 않습니다.');
+    } else if (myTaskError) {
+      throw new Error(myTaskError.message);
+    }
+    console.log('task:', myTask);
+    return myTask;
+  }
+
+  async getMyTaskProgress(userId: string) {
+    const supabase = this.supabaseService.getClient();
+    const {
+      data: allTask,
+      count: allTaskCount,
+      error: allTaskError,
+    } = await supabase
+      .from('task')
+      .select(`*, project:project!inner(*)`, { count: 'exact' })
+      .eq('user_id', userId)
+      .in('project.status', ['active', 'success', 'validating', 'reported']); // 이번 에포크에 승인된 프로젝트가 가질 수 있는 모든 상태
+    console.log('allTask:', allTask);
+    const {
+      data: successTask,
+      count: successCount,
+      error: successTaskError,
+    } = await supabase
+      .from('task')
+      .select(`*, project:project!inner(*)`, { count: 'exact' })
+      .eq('user_id', userId)
+      .eq('status', 'success')
+      .in('project.status', ['active', 'success', 'validating', 'reported']);
+
+    console.log('success task:', successTask);
+
+    return { allTaskCount, successCount };
+  }
+
+  async getProjectProgressById(projectId: string) {
+    const supabase = await this.supabaseService.getClient();
+    const {
+      data: allProjectTask,
+      count: allProjectTaskCount,
+      error: allProjectTaskError,
+    } = await supabase
+      .from('task')
+      .select('*', { count: 'exact' })
+      .eq('project_id', projectId);
+
+    console.log('allProjecetTask:', allProjectTask);
+
+    const {
+      data: doneTask,
+      count: countDoneTask,
+      error: doneTaskError,
+    } = await supabase
+      .from('task')
+      .select('*', { count: 'exact' })
+      .eq('project_id', projectId)
+      .eq('status', 'success');
+
+    console.log('doneTask:', doneTask);
+
+    return { allProjectTaskCount, countDoneTask };
+  }
 
   /**
    * 승인된 프로젝트에 GitHub 링크 추가

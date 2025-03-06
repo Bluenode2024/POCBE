@@ -6,6 +6,7 @@ import {
   UseInterceptors,
   Request,
   UploadedFile,
+  Param,
 } from '@nestjs/common';
 import { ActivityService } from './activity.service';
 import { AuthGuard } from '../auth/guards/auth.guard';
@@ -54,19 +55,20 @@ export class ActivityController {
     };
   }
 
-  @Post('submit-proof')
+  @Post(':id/submit-proof')
   @ApiOperation({ summary: 'IPFS 해시를 기반으로 활동 증명 제출' })
   @ApiResponse({ status: 201, description: '활동 증명 제출 성공' })
   @ApiResponse({ status: 400, description: '유효하지 않은 요청 데이터' })
   @ApiResponse({ status: 401, description: '인증 실패' })
   async submitProof(
+    @Param('id') taskId,
     @Body() submitProofSignatureDto: SubmitProofSignatureDto,
     @Request() req,
   ) {
     const userId = req.user.userId;
-    
 
     return this.activityService.submitActivityProof(
+      taskId,
       userId,
 
       submitProofSignatureDto.activityTypeId,

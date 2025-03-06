@@ -89,10 +89,59 @@ export class ProjectController {
   async getTasksByProjectId(@Param('id') projectId: string) {
     return this.projectService.getTasksByProjectId(projectId);
   }
+
+  @Get('task/:id')
+  @ApiBearerAuth('access-token')
+  @UseGuards(AuthGuard) // JWT 인증 미들웨어 적용
+  @ApiOperation({
+    summary: '테스크 상세 조회',
+    description: '주어진 테스크를 조회합니다.',
+  })
+  async getTaskById(@Param('id') taskId: string) {
+    return this.projectService.getTaskById(taskId);
+  }
+
+  @Get('my-tasks')
+  @ApiBearerAuth('access-token')
+  @UseGuards(AuthGuard) // JWT 인증 미들웨어 적용
+  @ApiOperation({
+    summary: '나의 테스크 조회',
+    description: '나에게 할당된 테스크를 조회합니다.',
+  })
+  async getMyTask(@Req() req) {
+    const userId = req.user.userId;
+    return this.projectService.getMyTask(userId);
+  }
+
+  @Get('my-progress')
+  @ApiBearerAuth('access-token')
+  @UseGuards(AuthGuard) // JWT 인증 미들웨어 적용
+  @ApiOperation({
+    summary: '나의 테스크 목록 조회',
+    description: '나에게 할당된 테스크의 진행도를 조회합니다.',
+  })
+  async getMyTaskProgress(@Req() req) {
+    const userId = req.user.userId;
+
+    return this.projectService.getMyTaskProgress(userId);
+  }
+
+  @Get(':id/progess')
+  @ApiBearerAuth('access-token')
+  @UseGuards(AuthGuard) // JWT 인증 미들웨어 적용
+  @ApiOperation({
+    summary: '프로젝트 진행률 조회',
+    description: '프로젝트의 진행률을 조회합니다.',
+  })
+  async getProjectProgressById(@Param('id') projectId: string) {
+    return this.projectService.getProjectProgressById(projectId);
+  }
+
   /**
    * ✅ 특정 상태의 프로젝트 조회
    */
   @Get('status/:status')
+  @UseGuards(AuthGuard) // JWT 인증 미들웨어 적용
   @ApiOperation({
     summary: '프로젝트 상태별 조회',
     description: '특정 상태의 프로젝트 목록을 조회합니다.',
