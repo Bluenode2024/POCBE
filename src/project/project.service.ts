@@ -47,14 +47,14 @@ export class ProjectService {
       const { data: user, error: memberError } = await supabase
         .from('user')
         .select('id')
-        .eq('name', member.member_name) // ✅ 입력된 이름과 일치하는 user 찾기
+        .eq('id', member.member_id) // ✅ 입력된 이름과 일치하는 user 찾기
         .single();
 
       if (memberError || !user) {
         console.warn(
-          `Warning: Member ${member.member_name} not found, skipping.`,
+          `Warning: Member with id ${member.member_id} not found, skipping.`,
         );
-        continue; // 멤버가 없으면 해당 멤버 추가를 건너뜀
+        continue; // 멤버가 없으면 해당 멤버 추가 건너뜀
       }
 
       await supabase.from('project_member').insert([
@@ -65,6 +65,7 @@ export class ProjectService {
         },
       ]);
     }
+
     if (dto.repo_link && dto.repo_link.length > 0) {
       for (const repo of dto.repo_link) {
         await supabase.from('repository').insert([

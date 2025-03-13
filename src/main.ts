@@ -32,7 +32,7 @@ async function bootstrap() {
 
   // CORS 설정
   app.enableCors({
-    origin: 'http://localhost:3000', // 허용할 클라이언트 도메인
+    origin: ['http://localhost:3000', 'https://wepublic-six.vercel.app/'], // 허용할 클라이언트 도메인
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // 허용할 메서드
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin'], // 허용할 헤더
     exposedHeaders: ['Authorization'],
@@ -66,6 +66,7 @@ async function bootstrap() {
     }),
   );
 
-  await app.listen(3001);
+  const port = process.env.PORT || 3001;
+  await app.listen(port);
 }
 bootstrap();

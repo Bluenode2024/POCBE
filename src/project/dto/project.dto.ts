@@ -41,13 +41,13 @@ export class CreateProjectDto {
   @ApiProperty({
     description: '프로젝트 멤버',
     example: [
-      { member_name: '정원필', role: 'developer' },
-      { member_name: '김승원', role: 'designer' },
+      { member_id: '정원필', role: 'developer' },
+      { member_id: '김승원', role: 'designer' },
     ],
     isArray: true,
   })
   @IsArray()
-  members: { member_name: string; role: string }[];
+  members: { member_id: string; role: string }[];
 
   @ApiProperty({
     description: '프로젝트 레포지토리 링크',
