@@ -36,4 +36,15 @@ export class UserController {
   async getUserId(@Param('walletAddress') walletAddress: string) {
     return this.userService.getUserId(walletAddress);
   }
+
+  @ApiBearerAuth('access-token')
+  @ApiOperation({
+    summary: '로그인한 사용자의 정보 조회 ',
+    description: '현재 로그인한 사용자의 정보를 조회합니다.',
+  })
+  @Get('myinfo')
+  async getMyInfo(@Request() req) {
+    const userId = req.user.userId;
+    return this.userService.getMyInfo(userId);
+  }
 }

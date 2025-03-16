@@ -61,4 +61,16 @@ export class UserService {
 
     return data.id;
   }
+
+  async getMyInfo(userId: string) {
+    const { data: Mydata, error: MydataError } = await this.supabase
+      .from('user')
+      .select('*')
+      .eq('id', userId)
+      .single();
+
+    if (MydataError || !Mydata) throw new Error('User not found');
+
+    return Mydata;
+  }
 }
