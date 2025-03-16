@@ -155,6 +155,7 @@ export class ProjectController {
   /**
    * ✅ 사용자가 현재 참여중인 모든 프로젝트 조회
    */
+
   @Get('myproject')
   @ApiBearerAuth('access-token')
   @UseGuards(AuthGuard) // JWT 인증 미들웨어 적용

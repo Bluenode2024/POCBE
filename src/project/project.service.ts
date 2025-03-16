@@ -361,7 +361,7 @@ export class ProjectService {
     `,
       )
       .eq('members_id', userId)
-      .in('project.status', ['active', 'validating']); // ✅ "active" 또는 "validating"인 프로젝트만 필터링
+      .in('project.status', ['active', 'validating', 'success']); // ✅ "active" 또는 "validating"인 프로젝트만 필터링
 
     if (error) throw new Error(error.message);
 
